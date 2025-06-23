@@ -64,13 +64,6 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Escola Bíblica Distrital</CardTitle>
           <CardDescription>Faça login para acessar o sistema</CardDescription>
-          
-          {/* Credenciais de teste */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
-            <p className="font-semibold text-blue-800 mb-1">Credenciais de teste:</p>
-            <p className="text-blue-700">Usuário: <span className="font-mono">admin</span></p>
-            <p className="text-blue-700">Senha: <span className="font-mono">password</span></p>
-          </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
