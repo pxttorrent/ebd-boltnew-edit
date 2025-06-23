@@ -11,6 +11,8 @@ import { Search, Download, Upload, Edit, Trash, Filter, FileText } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
 import ColumnSelector, { ColumnOption } from '../components/ColumnSelector';
+import ImportarDados from '../components/ImportarDados';
+import EdicaoRapida from '../components/EdicaoRapida';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -23,6 +25,10 @@ export default function ListaInteressados() {
   const [editingInteressado, setEditingInteressado] = useState<Interessado | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isEdicaoRapidaOpen, setIsEdicaoRapidaOpen] = useState(false);
+  const [interessadoEdicaoRapida, setInteressadoEdicaoRapida] = useState<Interessado | null>(null);
+  const [campoEdicaoRapida, setCampoEdicaoRapida] = useState<'status' | 'instrutor_biblico' | 'frequenta_cultos' | null>(null);
 
   // Definir colunas disponíveis para o relatório
   const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
@@ -119,10 +125,7 @@ export default function ListaInteressados() {
   };
 
   const handleImport = () => {
-    toast({
-      title: "Importação",
-      description: "Funcionalidade de importação será implementada em breve."
-    });
+    setIsImportDialogOpen(true);
   };
 
   const openColumnSelector = () => {
@@ -219,6 +222,12 @@ export default function ListaInteressados() {
       title: "Relatório PDF Gerado!",
       description: "O relatório em PDF foi baixado com sucesso."
     });
+  };
+
+  const handleEdicaoRapida = (interessado: Interessado, campo: 'status' | 'instrutor_biblico' | 'frequenta_cultos') => {
+    setInteressadoEdicaoRapida(interessado);
+    setCampoEdicaoRapida(campo);
+    setIsEdicaoRapidaOpen(true);
   };
 
   return (
@@ -338,13 +347,35 @@ export default function ListaInteressados() {
                         <TableCell>{interessado.endereco || '-'}</TableCell>
                         <TableCell>{interessado.cidade}</TableCell>
                         <TableCell>
-                          <Badge className={StatusColors[interessado.status]}>
-                            {interessado.status} - {StatusLabels[interessado.status]}
-                          </Badge>
+                          <div 
+                            className="cursor-pointer"
+                            onClick={() => handleEdicaoRapida(interessado, 'status')}
+                            title="Clique para editar"
+                          >
+                            <Badge className={StatusColors[interessado.status]}>
+                              {interessado.status} - {StatusLabels[interessado.status]}
+                            </Badge>
+                          </div>
                         </TableCell>
-                        <TableCell>{interessado.instrutor_biblico}</TableCell>
+                        <TableCell>
+                          <div 
+                            className="cursor-pointer hover:text-blue-600 hover:underline"
+                            onClick={() => handleEdicaoRapida(interessado, 'instrutor_biblico')}
+                            title="Clique para editar"
+                          >
+                            {interessado.instrutor_biblico}
+                          </div>
+                        </TableCell>
                         <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                        <TableCell>{interessado.frequenta_cultos || '-'}</TableCell>
+                        <TableCell>
+                          <div 
+                            className="cursor-pointer hover:text-blue-600 hover:underline"
+                            onClick={() => handleEdicaoRapida(interessado, 'frequenta_cultos')}
+                            title="Clique para editar"
+                          >
+                            {interessado.frequenta_cultos || '-'}
+                          </div>
+                        </TableCell>
                         <TableCell>{interessado.estudo_biblico || '-'}</TableCell>
                         <TableCell>
                           <div className="max-w-[200px] truncate" title={interessado.observacoes}>
@@ -404,6 +435,20 @@ export default function ListaInteressados() {
         columns={reportColumns}
         onColumnsChange={setReportColumns}
         onGenerate={generatePDFReport}
+      />
+
+      {/* Import Dialog */}
+      <ImportarDados
+        isOpen={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+      />
+
+      {/* Edição Rápida Dialog */}
+      <EdicaoRapida
+        isOpen={isEdicaoRapidaOpen}
+        onClose={() => setIsEdicaoRapidaOpen(false)}
+        interessado={interessadoEdicaoRapida}
+        campo={campoEdicaoRapida}
       />
     </div>
   );
