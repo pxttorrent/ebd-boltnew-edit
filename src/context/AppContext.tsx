@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import * as db from '../services/database';
 
 interface AppContextType {

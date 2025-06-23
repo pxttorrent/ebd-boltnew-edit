@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { ArrowLeft, CheckCircle, Upload, X } from 'lucide-react';
 import { IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import FotoCropper from './FotoCropper';
 
 interface CadastroMissionarioPublicoProps {
