@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, Users, BookOpen, Settings } from 'lucide-react';
+import { UserPlus, Users, BookOpen, Settings, Quote } from 'lucide-react';
 
 const features = [
   {
@@ -34,19 +34,76 @@ const features = [
   }
 ];
 
+const versosBiblicos = [
+  {
+    verso: "Portanto ide, fazei discípulos de todas as nações, batizando-os em nome do Pai, e do Filho, e do Espírito Santo.",
+    referencia: "Mateus 28:19"
+  },
+  {
+    verso: "E ser-me-eis testemunhas, tanto em Jerusalém como em toda a Judéia e Samaria, e até aos confins da terra.",
+    referencia: "Atos 1:8"
+  },
+  {
+    verso: "E disse-lhes: Ide por todo o mundo, pregai o evangelho a toda criatura.",
+    referencia: "Marcos 16:15"
+  },
+  {
+    verso: "Como são formosos os pés dos que anunciam a paz, dos que anunciam coisas boas!",
+    referencia: "Romanos 10:15"
+  },
+  {
+    verso: "Mas, como invocarão aquele em quem não creram? E como crerão naquele de quem não ouviram? E como ouvirão, se não há quem pregue?",
+    referencia: "Romanos 10:14"
+  },
+  {
+    verso: "Porque não me envergonho do evangelho de Cristo, pois é o poder de Deus para salvação de todo aquele que crê.",
+    referencia: "Romanos 1:16"
+  },
+  {
+    verso: "E todos os dias, no templo e nas casas, não cessavam de ensinar, e de anunciar a Jesus Cristo.",
+    referencia: "Atos 5:42"
+  },
+  {
+    verso: "A seara é realmente grande, mas poucos os ceifeiros; rogai, pois, ao Senhor da seara, que mande ceifeiros para a sua seara.",
+    referencia: "Lucas 10:2"
+  }
+];
+
 export default function BoasVindas() {
+  const [versoAtual, setVersoAtual] = useState(versosBiblicos[0]);
+
+  useEffect(() => {
+    const indiceAleatorio = Math.floor(Math.random() * versosBiblicos.length);
+    setVersoAtual(versosBiblicos[indiceAleatorio]);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Bem-vindos à Escola Bíblica Distrital
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Uma ferramenta para organizar e acompanhar o progresso espiritual dos interessados.
             Gerencie contatos, acompanhe estudos e organize sua equipe de missionários de forma eficiente.
           </p>
+
+          {/* Verso Bíblico */}
+          <div className="bg-gradient-to-r from-blue-100 to-blue-50 rounded-xl p-6 mx-auto max-w-4xl border-l-4 border-blue-500 shadow-sm">
+            <div className="flex items-start gap-3">
+              <Quote className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
+              <div className="text-left">
+                <p className="text-lg text-blue-900 font-medium italic leading-relaxed mb-2">
+                  "{versoAtual.verso}"
+                </p>
+                <p className="text-blue-700 font-semibold">
+                  - {versoAtual.referencia}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Features Grid */}
