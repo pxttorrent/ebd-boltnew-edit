@@ -10,15 +10,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Save, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Configuracoes() {
-  const { usuarios, setUsuarios } = useApp();
+  const { usuarios, updateUsuario } = useApp();
   const { toast } = useToast();
-  const [localUsuarios, setLocalUsuarios] = useState<Usuario[]>(usuarios);
+  const [localUsuarios, setLocalUsuarios] = useState<Usuario[]>([]);
 
-  // Debug: log dos usuários recebidos
+  // Sincronizar com o contexto sempre que usuarios mudar
   useEffect(() => {
     console.log('Configurações - Usuários recebidos do contexto:', usuarios.length);
-    usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ')'));
-    setLocalUsuarios(usuarios);
+    usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ') - Aprovado:', u.aprovado));
+    setLocalUsuarios([...usuarios]); // Criar uma nova cópia para garantir re-render
   }, [usuarios]);
 
   const handlePermissionChange = (userId: string, permission: keyof Usuario['permissoes'], value: boolean) => {
@@ -35,20 +35,34 @@ export default function Configuracoes() {
   };
 
   const handleApprovalChange = (userId: string, approved: boolean) => {
-    setLocalUsuarios(prev => 
-      prev.map(usuario => 
-        usuario.id === userId 
-          ? { ...usuario, aprovado: approved }
-          : usuario
-      )
+    const updatedUsuarios = localUsuarios.map(usuario => 
+      usuario.id === userId 
+        ? { ...usuario, aprovado: approved }
+        : usuario
     );
+    setLocalUsuarios(updatedUsuarios);
+    
+    // Aplicar a mudança imediatamente no contexto
+    updateUsuario(userId, { aprovado: approved });
+    
+    toast({
+      title: approved ? "Usuário Aprovado!" : "Usuário Desaprovado!",
+      description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} ${approved ? 'foi aprovado e agora pode acessar o sistema' : 'foi desaprovado'}.`
+    });
   };
 
   const handleSaveChanges = () => {
-    setUsuarios(localUsuarios);
+    // Salvar todas as mudanças de permissões
+    localUsuarios.forEach(usuario => {
+      updateUsuario(usuario.id, {
+        permissoes: usuario.permissoes,
+        aprovado: usuario.aprovado
+      });
+    });
+    
     toast({
       title: "Sucesso!",
-      description: "Permissões e status de aprovação atualizados com sucesso."
+      description: "Todas as permissões foram atualizadas com sucesso."
     });
   };
 
@@ -58,6 +72,10 @@ export default function Configuracoes() {
     pode_excluir: 'Pode Excluir',
     pode_exportar: 'Pode Exportar'
   };
+
+  // Separar usuários aprovados e pendentes
+  const usuariosPendentes = localUsuarios.filter(u => !u.aprovado);
+  const usuariosAprovados = localUsuarios.filter(u => u.aprovado);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
@@ -69,7 +87,11 @@ export default function Configuracoes() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
                 <p className="text-gray-600">Gerencie as permissões e aprovações dos usuários do sistema</p>
-                <p className="text-sm text-blue-600 mt-1">Total de usuários: {localUsuarios.length}</p>
+                <div className="flex gap-4 text-sm mt-2">
+                  <p className="text-blue-600">Total de usuários: {localUsuarios.length}</p>
+                  <p className="text-yellow-600">Pendentes: {usuariosPendentes.length}</p>
+                  <p className="text-green-600">Aprovados: {usuariosAprovados.length}</p>
+                </div>
               </div>
               <Button 
                 onClick={handleSaveChanges}
@@ -81,11 +103,68 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Usuários Pendentes */}
+          {usuariosPendentes.length > 0 && (
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-yellow-700 mb-4">
+                Solicitações Pendentes ({usuariosPendentes.length})
+              </h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-yellow-50">
+                      <TableHead className="font-semibold text-gray-700">Nome</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-center">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usuariosPendentes.map((usuario) => (
+                      <TableRow key={usuario.id} className="hover:bg-yellow-50">
+                        <TableCell className="font-medium">
+                          <div>
+                            <p className="font-semibold">{usuario.nome_completo}</p>
+                            <p className="text-sm text-gray-500">{usuario.login_acesso}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{usuario.igreja}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprovalChange(usuario.id, true)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Aprovar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleApprovalChange(usuario.id, false)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Rejeitar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* Usuários Aprovados */}
           <div className="p-6">
-            {localUsuarios.length === 0 ? (
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Usuários Aprovados ({usuariosAprovados.length})
+            </h2>
+            {usuariosAprovados.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Nenhum usuário cadastrado ainda.</p>
+                <p className="text-gray-500 text-lg">Nenhum usuário aprovado ainda.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -102,7 +181,7 @@ export default function Configuracoes() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {localUsuarios.map((usuario) => (
+                    {usuariosAprovados.map((usuario) => (
                       <TableRow key={usuario.id} className="hover:bg-gray-50">
                         <TableCell className="font-medium">
                           <div>
@@ -113,24 +192,17 @@ export default function Configuracoes() {
                         <TableCell>{usuario.igreja}</TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <Badge 
-                              variant={usuario.aprovado ? "default" : "secondary"}
-                              className={usuario.aprovado ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
-                            >
-                              {usuario.aprovado ? "Aprovado" : "Pendente"}
+                            <Badge className="bg-green-100 text-green-800">
+                              Aprovado
                             </Badge>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleApprovalChange(usuario.id, !usuario.aprovado)}
-                              className="text-xs"
+                              onClick={() => handleApprovalChange(usuario.id, false)}
+                              className="text-xs text-red-600 hover:text-red-700"
                             >
-                              {usuario.aprovado ? (
-                                <XCircle className="w-3 h-3 mr-1" />
-                              ) : (
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                              )}
-                              {usuario.aprovado ? "Desaprovar" : "Aprovar"}
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Desaprovar
                             </Button>
                           </div>
                         </TableCell>
@@ -139,7 +211,6 @@ export default function Configuracoes() {
                             <Switch
                               checked={usuario.permissoes[permission]}
                               onCheckedChange={(checked) => handlePermissionChange(usuario.id, permission, checked)}
-                              disabled={!usuario.aprovado}
                             />
                           </TableCell>
                         ))}

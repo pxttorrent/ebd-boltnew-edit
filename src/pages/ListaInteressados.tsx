@@ -366,7 +366,7 @@ export default function ListaInteressados() {
                       <TableHead className="font-semibold text-gray-700 min-w-[150px]">Participação Eventos</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[200px]">Estudo Bíblico</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[250px]">Observações</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[100px]">Ações</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[120px] text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -427,20 +427,22 @@ export default function ListaInteressados() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 justify-center">
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-blue-600 hover:text-blue-700"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2"
                               onClick={() => handleEdit(interessado)}
+                              title="Editar interessado"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-red-600 hover:text-red-700"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
                               onClick={() => handleDelete(interessado.id, interessado.nome_completo)}
+                              title="Excluir interessado"
                             >
                               <Trash className="w-4 h-4" />
                             </Button>
