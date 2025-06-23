@@ -1,32 +1,111 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Usuario, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Trash, AlertCircle } from 'lucide-react';
+import { Edit, Trash, AlertCircle, Camera, Upload, X } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
+import EditarMissionario from '../components/EditarMissionario';
 
 export default function CadastroMissionarios() {
-  const { usuarios, addUsuario, deleteUsuario } = useApp();
+  const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useApp();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     nome_completo: '',
     apelido: '',
     senha: '',
-    igreja: '' as Usuario['igreja'] | ''
+    igreja: '' as Usuario['igreja'] | '',
+    foto_perfil: ''
   });
+
+  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const login_acesso = formData.apelido ? `${formData.apelido}@escola-biblica.app` : '';
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
     setFormData({ ...formData, nome_completo: capitalizedName });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          title: "Erro",
+          description: "A foto deve ter no máximo 2MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({ ...prev, foto_perfil: event.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 300, height: 300 } 
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setIsCapturing(true);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível acessar a câmera.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const photoData = canvas.toDataURL('image/jpeg', 0.8);
+        setFormData(prev => ({ ...prev, foto_perfil: photoData }));
+        stopCamera();
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCapturing(false);
+  };
+
+  const removeFoto = () => {
+    setFormData(prev => ({ ...prev, foto_perfil: '' }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,6 +137,7 @@ export default function CadastroMissionarios() {
       login_acesso,
       senha: formData.senha,
       igreja: formData.igreja as Usuario['igreja'],
+      foto_perfil: formData.foto_perfil,
       aprovado: true,
       permissoes: {
         pode_cadastrar: true,
@@ -79,8 +159,13 @@ export default function CadastroMissionarios() {
       nome_completo: '',
       apelido: '',
       senha: '',
-      igreja: '' as Usuario['igreja'] | ''
+      igreja: '' as Usuario['igreja'] | '',
+      foto_perfil: ''
     });
+  };
+
+  const handleEdit = (usuario: Usuario) => {
+    setEditingUsuario(usuario);
   };
 
   const handleDelete = (id: string, nome: string) => {
@@ -120,6 +205,63 @@ export default function CadastroMissionarios() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Foto de Perfil */}
+              <div className="space-y-2">
+                <Label>Foto de Perfil</Label>
+                <div className="flex flex-col items-center gap-3">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage src={formData.foto_perfil} />
+                    <AvatarFallback className="text-lg">
+                      {formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {isCapturing ? (
+                    <div className="space-y-2">
+                      <video ref={videoRef} autoPlay className="w-48 h-36 border rounded" />
+                      <canvas ref={canvasRef} className="hidden" />
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={capturePhoto} size="sm">
+                          Capturar
+                        </Button>
+                        <Button type="button" onClick={stopCamera} variant="outline" size="sm">
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={() => fileInputRef.current?.click()} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Upload className="w-4 h-4 mr-1" />
+                        Upload
+                      </Button>
+                      <Button type="button" onClick={startCamera} variant="outline" size="sm">
+                        <Camera className="w-4 h-4 mr-1" />
+                        Câmera
+                      </Button>
+                      {formData.foto_perfil && (
+                        <Button type="button" onClick={removeFoto} variant="outline" size="sm">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="nome_completo" className="text-sm font-medium text-gray-700 mb-2 block">
                   Nome Completo *
@@ -212,6 +354,7 @@ export default function CadastroMissionarios() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-700">Foto</TableHead>
                     <TableHead className="font-semibold text-gray-700">Nome</TableHead>
                     <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
                     <TableHead className="font-semibold text-gray-700">Login</TableHead>
@@ -221,12 +364,25 @@ export default function CadastroMissionarios() {
                 <TableBody>
                   {usuarios.map((usuario) => (
                     <TableRow key={usuario.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={usuario.foto_perfil} />
+                          <AvatarFallback className="text-xs">
+                            {usuario.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
                       <TableCell className="font-medium">{usuario.nome_completo}</TableCell>
                       <TableCell>{usuario.igreja}</TableCell>
                       <TableCell className="text-sm text-gray-600">{usuario.login_acesso}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleEdit(usuario)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
@@ -246,6 +402,15 @@ export default function CadastroMissionarios() {
             )}
           </div>
         </div>
+
+        {editingUsuario && (
+          <EditarMissionario
+            usuario={editingUsuario}
+            isOpen={!!editingUsuario}
+            onClose={() => setEditingUsuario(null)}
+            onSave={updateUsuario}
+          />
+        )}
       </div>
     </div>
   );

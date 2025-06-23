@@ -7,6 +7,7 @@ export interface Usuario {
   senha: string;
   igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
   aprovado: boolean;
+  foto_perfil?: string; // URL da foto em base64 ou URL
   permissoes: {
     pode_cadastrar: boolean;
     pode_editar: boolean;
