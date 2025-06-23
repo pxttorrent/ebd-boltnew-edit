@@ -52,6 +52,7 @@ export default function CadastroMissionarios() {
       login_acesso,
       senha: formData.senha,
       igreja: formData.igreja as Usuario['igreja'],
+      aprovado: true,
       permissoes: {
         pode_cadastrar: true,
         pode_editar: true,
