@@ -78,11 +78,33 @@ export const registerUser = async (userData: any) => {
   try {
     console.log('Starting signup process with data:', userData);
     
+    // Validar dados obrigatórios
+    if (!userData.nome_completo || !userData.apelido || !userData.senha || !userData.igreja) {
+      return { error: 'Todos os campos obrigatórios devem ser preenchidos' };
+    }
+
+    // Validar apelido (apenas letras, números e pontos)
+    const apelidoRegex = /^[a-z0-9.]+$/;
+    if (!apelidoRegex.test(userData.apelido)) {
+      return { error: 'O apelido deve conter apenas letras minúsculas, números e pontos' };
+    }
+
     // Hash the password before storing
     const hashedPassword = await hashPassword(userData.senha);
     
     const emailForAuth = createEmailForAuth(userData.login_acesso);
     
+    // Verificar se o apelido já existe
+    const { data: existingUser } = await supabase
+      .from('usuarios')
+      .select('apelido')
+      .eq('apelido', userData.apelido)
+      .maybeSingle();
+
+    if (existingUser) {
+      return { error: 'Este apelido já está em uso. Escolha outro.' };
+    }
+
     // Insert into usuarios table directly
     const { data: usuario, error: insertError } = await supabase
       .from('usuarios')
@@ -92,14 +114,25 @@ export const registerUser = async (userData: any) => {
         login_acesso: userData.login_acesso,
         senha: hashedPassword,
         igreja: userData.igreja,
-        foto_perfil: userData.foto_perfil,
-        aprovado: false
+        foto_perfil: userData.foto_perfil || null,
+        aprovado: false // Sempre iniciar como não aprovado
       })
       .select()
       .single();
 
     if (insertError) {
       console.error('Insert error:', insertError);
+      
+      // Tratar erros específicos
+      if (insertError.code === '23505') { // Unique violation
+        if (insertError.message.includes('apelido')) {
+          return { error: 'Este apelido já está em uso. Escolha outro.' };
+        } else if (insertError.message.includes('login_acesso')) {
+          return { error: 'Este email já está cadastrado.' };
+        }
+        return { error: 'Já existe um usuário com estes dados.' };
+      }
+      
       return { error: insertError.message };
     }
 
@@ -110,14 +143,15 @@ export const registerUser = async (userData: any) => {
 
     if (permissionsError) {
       console.error('Permissions error:', permissionsError);
-      return { error: permissionsError.message };
+      // Não falhar o cadastro se as permissões não foram criadas
+      console.warn('User created but permissions not set. Admin can set them later.');
     }
 
     console.log('Signup completed successfully');
     return {};
   } catch (error: any) {
     console.error('Signup error:', error);
-    return { error: error.message };
+    return { error: error.message || 'Erro inesperado durante o cadastro' };
   }
 };
 

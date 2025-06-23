@@ -83,10 +83,24 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       return;
     }
 
+    // Validação básica de senha
+    if (formData.senha.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      console.log('Submitting form data:', formData);
+      console.log('Iniciando cadastro de missionário:', {
+        nome: formData.nome_completo,
+        apelido: formData.apelido,
+        igreja: formData.igreja
+      });
       
       const userData = {
         nome_completo: formData.nome_completo,
@@ -94,23 +108,39 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
         login_acesso: `${formData.apelido}@escola-biblica.app`,
         senha: formData.senha,
         igreja: formData.igreja,
-        foto_perfil: formData.foto_perfil
+        foto_perfil: formData.foto_perfil,
+        aprovado: false // Sempre inicia como não aprovado
       };
 
-      console.log('Calling signUp with userData:', userData);
+      console.log('Dados do usuário preparados:', userData);
       const { error } = await signUp(userData);
 
       if (error) {
-        console.error('SignUp error:', error);
+        console.error('Erro no cadastro:', error);
+        
+        // Tratar erros específicos
+        let errorMessage = error;
+        if (error.includes('duplicate key')) {
+          if (error.includes('apelido')) {
+            errorMessage = 'Este apelido já está em uso. Escolha outro.';
+          } else if (error.includes('login_acesso')) {
+            errorMessage = 'Este email já está cadastrado.';
+          } else {
+            errorMessage = 'Já existe um usuário com estes dados.';
+          }
+        } else if (error.includes('invalid input')) {
+          errorMessage = 'Dados inválidos. Verifique os campos preenchidos.';
+        }
+        
         toast({
           title: "Erro no Cadastro",
-          description: error,
+          description: errorMessage,
           variant: "destructive"
         });
         return;
       }
 
-      console.log('Signup successful');
+      console.log('Cadastro realizado com sucesso');
       setCadastroRealizado(true);
       toast({
         title: "Cadastro realizado!",
@@ -118,7 +148,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       });
 
     } catch (error: any) {
-      console.error('Unexpected error during signup:', error);
+      console.error('Erro inesperado durante o cadastro:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao realizar cadastro. Tente novamente.",
@@ -236,11 +266,14 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
               <Input
                 id="apelido"
                 value={formData.apelido}
-                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '') }))}
                 placeholder="ex: joao.silva"
                 required
                 disabled={loading}
               />
+              <p className="text-xs text-gray-500">
+                Apenas letras minúsculas, números e pontos são permitidos
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -250,9 +283,10 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                 type="password"
                 value={formData.senha}
                 onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-                placeholder="Digite uma senha segura"
+                placeholder="Digite uma senha segura (mín. 6 caracteres)"
                 required
                 disabled={loading}
+                minLength={6}
               />
             </div>
 
