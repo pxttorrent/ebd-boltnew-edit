@@ -11,6 +11,7 @@ import { Search, Download, Upload, Edit, Trash, Filter, FileText } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 export default function ListaInteressados() {
   const { interessados, deleteInteressado } = useApp();
@@ -63,9 +64,49 @@ export default function ListaInteressados() {
   };
 
   const handleExport = () => {
+    // Preparar dados para Excel
+    const excelData = filteredInteressados.map(interessado => ({
+      'Nome Completo': interessado.nome_completo,
+      'Telefone': interessado.telefone,
+      'Endereço': interessado.endereco || '',
+      'Cidade': interessado.cidade,
+      'Status': `${interessado.status} - ${StatusLabels[interessado.status]}`,
+      'Instrutor Bíblico': interessado.instrutor_biblico,
+      'Data do Contato': interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '',
+      'Frequenta Cultos': interessado.frequenta_cultos ? 'Sim' : 'Não',
+      'Estudo Bíblico': interessado.estudo_biblico || '',
+      'Observações': interessado.observacoes || ''
+    }));
+
+    // Criar planilha
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Interessados');
+
+    // Definir largura das colunas
+    const columnWidths = [
+      { wch: 25 }, // Nome Completo
+      { wch: 15 }, // Telefone
+      { wch: 30 }, // Endereço
+      { wch: 20 }, // Cidade
+      { wch: 25 }, // Status
+      { wch: 20 }, // Instrutor Bíblico
+      { wch: 12 }, // Data do Contato
+      { wch: 15 }, // Frequenta Cultos
+      { wch: 25 }, // Estudo Bíblico
+      { wch: 40 }  // Observações
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Gerar nome do arquivo
+    const fileName = `interessados-${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Fazer download
+    XLSX.writeFile(workbook, fileName);
+
     toast({
-      title: "Exportação",
-      description: "Funcionalidade de exportação será implementada em breve."
+      title: "Exportação Concluída!",
+      description: "A planilha Excel foi baixada com sucesso."
     });
   };
 
