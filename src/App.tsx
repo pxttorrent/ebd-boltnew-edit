@@ -15,11 +15,17 @@ import CadastroMissionarios from "./pages/CadastroMissionarios";
 import Configuracoes from "./pages/Configuracoes";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    // Force re-render when user changes
+    console.log('User state changed:', user?.id);
+  }, [user]);
 
   if (loading) {
     return (

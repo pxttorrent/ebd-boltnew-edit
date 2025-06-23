@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -48,6 +49,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, setCurrentUser } = useApp();
   const { signOut } = useAuth();
   const { state } = useSidebar();
@@ -68,6 +70,10 @@ export function AppSidebar() {
       });
       
       console.log('Logout realizado com sucesso');
+      
+      // Redirect to login page
+      navigate('/', { replace: true });
+      
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
       toast({
