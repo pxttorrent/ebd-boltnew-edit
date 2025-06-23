@@ -196,7 +196,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
               <Input
                 id="apelido"
                 value={formData.apelido}
-                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
                 placeholder="ex: joao.silva"
                 required
               />

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -215,7 +214,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
             <Input
               id="apelido"
               value={formData.apelido}
-              onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase().replace(/\s/g, '.') }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
               required
             />
           </div>

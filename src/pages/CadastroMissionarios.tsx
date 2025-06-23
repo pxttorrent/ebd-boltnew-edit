@@ -232,7 +232,7 @@ export default function CadastroMissionarios() {
                 <Input
                   id="apelido"
                   value={formData.apelido}
-                  onChange={(e) => setFormData({ ...formData, apelido: e.target.value.toLowerCase().replace(/\s/g, '.') })}
+                  onChange={(e) => setFormData({ ...formData, apelido: e.target.value.toLowerCase() })}
                   placeholder="Ex: joao.silva"
                   required
                 />
