@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, CheckCircle, Camera, Upload, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Upload, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Usuario, IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
@@ -30,10 +29,6 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
   const { toast } = useToast();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState('');
 
@@ -62,58 +57,6 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
-      }
-      setIsCapturing(true);
-    } catch (error) {
-      console.error('Camera error:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível acessar a câmera. Verifique as permissões.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const photoData = canvas.toDataURL('image/jpeg', 0.8);
-        setTempImageSrc(photoData);
-        setCropperOpen(true);
-        stopCamera();
-      }
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-    setIsCapturing(false);
   };
 
   const handleCropComplete = (croppedImageUrl: string) => {
@@ -202,55 +145,30 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                   </AvatarFallback>
                 </Avatar>
 
-                {isCapturing ? (
-                  <div className="space-y-3">
-                    <video ref={videoRef} autoPlay playsInline className="w-48 h-36 border rounded-lg" />
-                    <canvas ref={canvasRef} className="hidden" />
-                    <div className="flex gap-2 justify-center">
-                      <Button type="button" onClick={capturePhoto} size="sm">
-                        Capturar Foto
-                      </Button>
-                      <Button type="button" onClick={stopCamera} variant="outline" size="sm">
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2 justify-center">
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()} 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Escolher da Galeria
+                  </Button>
+                  {formData.foto_perfil && (
                     <Button 
                       type="button" 
-                      onClick={() => fileInputRef.current?.click()} 
+                      onClick={removeFoto} 
                       variant="outline" 
                       size="sm"
-                      className="flex items-center gap-2"
+                      className="text-red-600 hover:text-red-700"
                     >
-                      <Upload className="w-4 h-4" />
-                      Escolher da Galeria
+                      <X className="w-4 h-4" />
+                      Remover
                     </Button>
-                    <Button 
-                      type="button" 
-                      onClick={startCamera} 
-                      variant="outline" 
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Tirar Foto
-                    </Button>
-                    {formData.foto_perfil && (
-                      <Button 
-                        type="button" 
-                        onClick={removeFoto} 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                        Remover
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <input
                   ref={fileInputRef}
@@ -315,7 +233,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-sm text-blue-800">
                 <strong>Importante:</strong> Após o cadastro, sua conta ficará pendente de aprovação pelo administrador. 
-                Você será notificado quando o acesso for liberado.
+                Você será notificado quando sua conta for aprovada.
               </p>
             </div>
 
