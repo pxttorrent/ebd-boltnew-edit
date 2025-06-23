@@ -102,7 +102,7 @@ const mockInteressados: Interessado[] = [
 ];
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<Usuario | null>(mockUsuarios[0]);
+  const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
   const [interessados, setInteressados] = useState<Interessado[]>(mockInteressados);
 
