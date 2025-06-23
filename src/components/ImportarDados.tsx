@@ -78,12 +78,12 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
             observacoes: rowData['Observações'] || rowData['Observacoes'] || ''
           };
 
-          // Validar apenas campos mínimos essenciais
-          if (interessado.nome_completo.trim() && interessado.telefone.trim()) {
+          // Validar apenas campos mínimos essenciais: Nome e Igreja
+          if (interessado.nome_completo.trim() && interessado.cidade.trim()) {
             addInteressado(interessado);
             imported++;
           } else {
-            console.log('Registro ignorado - falta nome ou telefone:', rowData);
+            console.log('Registro ignorado - falta nome ou igreja:', rowData);
             errors++;
           }
         } catch (error) {
@@ -94,7 +94,7 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
 
       toast({
         title: "Importação Concluída",
-        description: `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros ignorados por falta de dados essenciais (nome e telefone).` : ''}`
+        description: `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros ignorados por falta de dados essenciais (nome e igreja).` : ''}`
       });
 
       onClose();
@@ -122,10 +122,10 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           <div className="text-sm text-gray-600">
             <p>Selecione um arquivo Excel (.xlsx) com os dados dos interessados.</p>
             <p className="mt-2">
-              <strong>Campos obrigatórios:</strong> Nome Completo e Telefone
+              <strong>Campos obrigatórios:</strong> Nome Completo e Igreja
             </p>
             <p className="mt-1">
-              <strong>Campos opcionais:</strong> Endereço, Igreja, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
+              <strong>Campos opcionais:</strong> Telefone, Endereço, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
             </p>
             <p className="mt-2 text-xs text-blue-600">
               * Se um instrutor não for encontrado, você poderá completar o cadastro depois na lista.
