@@ -79,7 +79,7 @@ export default function CadastroMissionarios() {
     if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos.",
+        description: "Por favor, preencha todos os campos obrigatórios.",
         variant: "destructive"
       });
       return;
@@ -89,7 +89,7 @@ export default function CadastroMissionarios() {
     if (usuarios.some(u => u.apelido === formData.apelido)) {
       toast({
         title: "Erro",
-        description: "Este apelido já está em uso.",
+        description: "Este apelido já está em uso. Escolha outro apelido.",
         variant: "destructive"
       });
       return;
@@ -98,10 +98,11 @@ export default function CadastroMissionarios() {
     setLoading(true);
 
     try {
-      console.log('Iniciando cadastro de missionário...');
+      console.log('Iniciando cadastro de missionário...', { apelido: formData.apelido, igreja: formData.igreja });
       
       // Hash password before storing
       const hashedPassword = await hashPassword(formData.senha);
+      console.log('Senha hasheada com sucesso');
       
       // Insert directly into Supabase usuarios table
       const { data: usuario, error: insertError } = await supabase
@@ -112,7 +113,7 @@ export default function CadastroMissionarios() {
           login_acesso,
           senha: hashedPassword,
           igreja: formData.igreja,
-          foto_perfil: formData.foto_perfil,
+          foto_perfil: formData.foto_perfil || null,
           aprovado: true // Admin is creating, so auto-approve
         })
         .select()
@@ -120,7 +121,7 @@ export default function CadastroMissionarios() {
 
       if (insertError) {
         console.error('Erro ao inserir usuário:', insertError);
-        throw insertError;
+        throw new Error(insertError.message || 'Erro ao inserir usuário no banco de dados');
       }
 
       console.log('Usuário inserido com sucesso:', usuario);
@@ -138,17 +139,22 @@ export default function CadastroMissionarios() {
 
       if (permissionsError) {
         console.error('Erro ao inserir permissões:', permissionsError);
-        throw permissionsError;
+        // Don't throw here, user was created successfully
+        toast({
+          title: "Aviso",
+          description: "Usuário criado, mas houve problema ao definir permissões. Verifique as permissões posteriormente.",
+          variant: "default"
+        });
+      } else {
+        console.log('Permissões inseridas com sucesso');
       }
-
-      console.log('Permissões inseridas com sucesso');
 
       // Refresh data to update the UI
       await refreshData();
       
       toast({
         title: "Sucesso!",
-        description: "Missionário cadastrado com sucesso."
+        description: `Missionário ${formData.nome_completo} cadastrado com sucesso.`
       });
 
       // Reset form
@@ -164,7 +170,7 @@ export default function CadastroMissionarios() {
       console.error('Erro durante o cadastro:', error);
       toast({
         title: "Erro no Cadastro",
-        description: error.message || "Erro inesperado ao cadastrar missionário.",
+        description: error.message || "Erro inesperado ao cadastrar missionário. Tente novamente.",
         variant: "destructive"
       });
     } finally {
