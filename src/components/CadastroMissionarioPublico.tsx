@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, CheckCircle, Upload, X } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { Usuario, IgrejaOptions } from '../types';
+import { IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '../hooks/useAuth';
 import FotoCropper from './FotoCropper';
 
 interface CadastroMissionarioPublicoProps {
@@ -25,7 +26,8 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
     foto_perfil: ''
   });
   const [cadastroRealizado, setCadastroRealizado] = useState(false);
-  const { addUsuario } = useApp();
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
   const { toast } = useToast();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,28 +71,57 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
     setFormData(prev => ({ ...prev, foto_perfil: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const novoUsuario: Usuario = {
-      id: Date.now().toString(),
-      nome_completo: formData.nome_completo,
-      apelido: formData.apelido,
-      login_acesso: `${formData.apelido}@escola-biblica.app`,
-      senha: formData.senha,
-      igreja: formData.igreja,
-      aprovado: false,
-      foto_perfil: formData.foto_perfil,
-      permissoes: {
-        pode_cadastrar: false,
-        pode_editar: false,
-        pode_excluir: false,
-        pode_exportar: false
-      }
-    };
+    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    addUsuario(novoUsuario);
-    setCadastroRealizado(true);
+    setLoading(true);
+
+    try {
+      const userData = {
+        nome_completo: formData.nome_completo,
+        apelido: formData.apelido,
+        login_acesso: `${formData.apelido}@escola-biblica.app`,
+        senha: formData.senha,
+        igreja: formData.igreja,
+        foto_perfil: formData.foto_perfil
+      };
+
+      const { error } = await signUp(userData);
+
+      if (error) {
+        toast({
+          title: "Erro no Cadastro",
+          description: error,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCadastroRealizado(true);
+      toast({
+        title: "Cadastro realizado!",
+        description: "Sua solicitação foi enviada para aprovação."
+      });
+
+    } catch (error: any) {
+      console.error('Erro no cadastro:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao realizar cadastro. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (cadastroRealizado) {
@@ -122,7 +153,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
-            <Button variant="ghost" size="sm" onClick={onVoltar}>
+            <Button variant="ghost" size="sm" onClick={onVoltar} disabled={loading}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <CardTitle className="text-xl font-bold text-gray-900">Cadastrar Missionário</CardTitle>
@@ -152,6 +183,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                     variant="outline" 
                     size="sm"
                     className="flex items-center gap-2"
+                    disabled={loading}
                   >
                     <Upload className="w-4 h-4" />
                     Escolher da Galeria
@@ -163,6 +195,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                       variant="outline" 
                       size="sm"
                       className="text-red-600 hover:text-red-700"
+                      disabled={loading}
                     >
                       <X className="w-4 h-4" />
                       Remover
@@ -176,34 +209,37 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                   accept="image/*"
                   onChange={handleFileUpload}
                   className="hidden"
+                  disabled={loading}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nome_completo">Nome Completo</Label>
+              <Label htmlFor="nome_completo">Nome Completo *</Label>
               <Input
                 id="nome_completo"
                 value={formData.nome_completo}
                 onChange={handleNomeChange}
                 placeholder="Digite seu nome completo"
                 required
+                disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="apelido">Apelido de Usuário</Label>
+              <Label htmlFor="apelido">Apelido de Usuário *</Label>
               <Input
                 id="apelido"
                 value={formData.apelido}
                 onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
                 placeholder="ex: joao.silva"
                 required
+                disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
+              <Label htmlFor="senha">Senha *</Label>
               <Input
                 id="senha"
                 type="password"
@@ -211,12 +247,17 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                 onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
                 placeholder="Digite uma senha segura"
                 required
+                disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="igreja">Igreja</Label>
-              <Select value={formData.igreja} onValueChange={(value) => setFormData(prev => ({ ...prev, igreja: value as any }))}>
+              <Label htmlFor="igreja">Igreja *</Label>
+              <Select 
+                value={formData.igreja} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, igreja: value as any }))}
+                disabled={loading}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione sua igreja" />
                 </SelectTrigger>
@@ -237,8 +278,12 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
               </p>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Solicitar Cadastro
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Enviando...' : 'Solicitar Cadastro'}
             </Button>
           </form>
         </CardContent>
