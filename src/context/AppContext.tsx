@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
 
@@ -33,7 +32,7 @@ const mockUsuarios: Usuario[] = [
     id: 'admin',
     nome_completo: 'Administrador do Sistema',
     apelido: 'admin',
-    login_acesso: 'admin@escola-biblica.app',
+    login_acesso: 'admin',
     senha: 'admin',
     igreja: 'Armour',
     aprovado: true,
@@ -86,7 +85,9 @@ const mockInteressados: Interessado[] = [
     status: 'D',
     instrutor_biblico: 'João Silva',
     data_contato: '2024-06-01',
-    observacoes: 'Muito interessada nos estudos bíblicos'
+    observacoes: 'Muito interessada nos estudos bíblicos',
+    frequenta_cultos: true,
+    estudo_biblico: 'Estudo sobre a Criação'
   },
   {
     id: '2',
@@ -97,7 +98,9 @@ const mockInteressados: Interessado[] = [
     status: 'B',
     instrutor_biblico: 'Maria Costa',
     data_contato: '2024-05-15',
-    observacoes: 'Decidido pelo batismo, aguardando resolver questões familiares'
+    observacoes: 'Decidido pelo batismo, aguardando resolver questões familiares',
+    frequenta_cultos: false,
+    estudo_biblico: 'Estudo sobre o Batismo'
   }
 ];
 

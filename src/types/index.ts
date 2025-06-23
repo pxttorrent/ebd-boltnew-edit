@@ -25,6 +25,8 @@ export interface Interessado {
   instrutor_biblico: string;
   data_contato: string;
   observacoes: string;
+  frequenta_cultos?: boolean;
+  estudo_biblico?: string;
 }
 
 export const StatusLabels = {

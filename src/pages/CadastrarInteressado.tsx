@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Interessado, StatusLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { capitalizeWords } from '../utils/textUtils';
@@ -21,7 +23,9 @@ export default function CadastrarInteressado() {
     status: '' as Interessado['status'] | '',
     instrutor_biblico: '',
     data_contato: '',
-    observacoes: ''
+    observacoes: '',
+    frequenta_cultos: undefined as boolean | undefined,
+    estudo_biblico: ''
   });
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +48,8 @@ export default function CadastrarInteressado() {
     const novoInteressado: Interessado = {
       id: Date.now().toString(),
       ...formData,
-      status: formData.status as Interessado['status']
+      status: formData.status as Interessado['status'],
+      frequenta_cultos: formData.frequenta_cultos
     };
 
     addInteressado(novoInteressado);
@@ -63,7 +68,9 @@ export default function CadastrarInteressado() {
       status: '' as Interessado['status'] | '',
       instrutor_biblico: '',
       data_contato: '',
-      observacoes: ''
+      observacoes: '',
+      frequenta_cultos: undefined,
+      estudo_biblico: ''
     });
   };
 
@@ -132,11 +139,11 @@ export default function CadastrarInteressado() {
 
               <div>
                 <Label htmlFor="status" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Status *
+                  Qual a situação atual deste interessado? *
                 </Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Interessado['status'] })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
+                    <SelectValue placeholder="Selecione a situação" />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(StatusLabels).map(([key, label]) => (
@@ -180,6 +187,40 @@ export default function CadastrarInteressado() {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Já está frequentando os cultos da igreja? 
+                <span className="text-xs text-gray-500 block mt-1">
+                  ("Não deixemos de congregar-nos, como é costume de alguns..." - Hebreus 10:25)
+                </span>
+              </Label>
+              <RadioGroup 
+                value={formData.frequenta_cultos?.toString()} 
+                onValueChange={(value) => setFormData({ ...formData, frequenta_cultos: value === 'true' })}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="true" id="frequenta_sim" />
+                  <Label htmlFor="frequenta_sim">Sim</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="false" id="frequenta_nao" />
+                  <Label htmlFor="frequenta_nao">Não</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <Label htmlFor="estudo_biblico" className="text-sm font-medium text-gray-700 mb-2 block">
+                Qual estudo bíblico este amigo está recebendo?
+              </Label>
+              <Input
+                id="estudo_biblico"
+                value={formData.estudo_biblico}
+                onChange={(e) => setFormData({ ...formData, estudo_biblico: e.target.value })}
+                placeholder="Ex: Estudo sobre a Criação, O Grande Conflito, etc."
+              />
             </div>
 
             <div>
