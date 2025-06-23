@@ -129,8 +129,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (userData: any) => {
     try {
       setLoading(true);
+      console.log('Starting signup process with data:', userData);
       
-      // Insert into usuarios table
+      // Insert into usuarios table directly (now allowed by RLS policy)
       const { data: usuario, error: insertError } = await supabase
         .from('usuarios')
         .insert({
@@ -146,11 +147,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (insertError) {
+        console.error('Insert error:', insertError);
         return { error: insertError.message };
       }
 
+      console.log('User inserted successfully:', usuario);
+
       // Insert default permissions
-      await supabase
+      const { error: permissionsError } = await supabase
         .from('usuario_permissoes')
         .insert({
           usuario_id: usuario.id,
@@ -160,8 +164,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           pode_exportar: false
         });
 
+      if (permissionsError) {
+        console.error('Permissions error:', permissionsError);
+        return { error: permissionsError.message };
+      }
+
+      console.log('Signup completed successfully');
       return {};
     } catch (error: any) {
+      console.error('Signup error:', error);
       return { error: error.message };
     } finally {
       setLoading(false);

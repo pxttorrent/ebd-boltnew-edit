@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,6 +85,8 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
     setLoading(true);
 
     try {
+      console.log('Submitting form data:', formData);
+      
       const userData = {
         nome_completo: formData.nome_completo,
         apelido: formData.apelido,
@@ -95,9 +96,11 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
         foto_perfil: formData.foto_perfil
       };
 
+      console.log('Calling signUp with userData:', userData);
       const { error } = await signUp(userData);
 
       if (error) {
+        console.error('SignUp error:', error);
         toast({
           title: "Erro no Cadastro",
           description: error,
@@ -106,6 +109,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
         return;
       }
 
+      console.log('Signup successful');
       setCadastroRealizado(true);
       toast({
         title: "Cadastro realizado!",
@@ -113,7 +117,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       });
 
     } catch (error: any) {
-      console.error('Erro no cadastro:', error);
+      console.error('Unexpected error during signup:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao realizar cadastro. Tente novamente.",
