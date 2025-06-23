@@ -10,6 +10,7 @@ import { StatusLabels, StatusColors, Interessado } from '../types';
 import { Search, Download, Upload, Edit, Trash, Filter, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
+import ColumnSelector, { ColumnOption } from '../components/ColumnSelector';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -21,6 +22,21 @@ export default function ListaInteressados() {
   const [cidadeFilter, setCidadeFilter] = useState<string>('todas');
   const [editingInteressado, setEditingInteressado] = useState<Interessado | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+
+  // Definir colunas disponíveis para o relatório
+  const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
+    { key: 'nome_completo', label: 'Nome Completo', selected: true },
+    { key: 'telefone', label: 'Telefone', selected: true },
+    { key: 'endereco', label: 'Endereço', selected: true },
+    { key: 'cidade', label: 'Cidade', selected: true },
+    { key: 'status', label: 'Status', selected: true },
+    { key: 'instrutor_biblico', label: 'Instrutor Bíblico', selected: true },
+    { key: 'data_contato', label: 'Data do Contato', selected: true },
+    { key: 'frequenta_cultos', label: 'Participação em Eventos', selected: true },
+    { key: 'estudo_biblico', label: 'Estudo Bíblico', selected: true },
+    { key: 'observacoes', label: 'Observações', selected: false }
+  ]);
 
   // Filtrar interessados
   const filteredInteressados = interessados.filter(interessado => {
@@ -109,8 +125,22 @@ export default function ListaInteressados() {
     });
   };
 
+  const openColumnSelector = () => {
+    setIsColumnSelectorOpen(true);
+  };
+
   const generatePDFReport = () => {
-    const doc = new jsPDF('landscape'); // Mudei para paisagem para acomodar mais colunas
+    const selectedColumns = reportColumns.filter(col => col.selected);
+    
+    if (selectedColumns.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione pelo menos uma coluna para o relatório."
+      });
+      return;
+    }
+
+    const doc = new jsPDF('landscape');
     
     doc.setFontSize(16);
     doc.text('RELATÓRIO DE INTERESSADOS', 20, 20);
@@ -119,18 +149,17 @@ export default function ListaInteressados() {
     doc.text(`Total de Interessados: ${filteredInteressados.length}`, 20, 35);
     doc.text(`Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
     
-    doc.setFontSize(8); // Fonte menor para acomodar mais dados
+    doc.setFontSize(8);
     let yPosition = 65;
     
-    // Cabeçalho expandido
-    doc.text('Nome', 10, yPosition);
-    doc.text('Telefone', 60, yPosition);
-    doc.text('Endereço', 100, yPosition);
-    doc.text('Cidade', 140, yPosition);
-    doc.text('Status', 170, yPosition);
-    doc.text('Instrutor', 200, yPosition);
-    doc.text('Data', 230, yPosition);
-    doc.text('Eventos', 250, yPosition);
+    // Calcular largura das colunas baseado na quantidade selecionada
+    const availableWidth = 270;
+    const columnWidth = availableWidth / selectedColumns.length;
+    
+    // Cabeçalho dinâmico baseado nas colunas selecionadas
+    selectedColumns.forEach((col, index) => {
+      doc.text(col.label, 10 + (index * columnWidth), yPosition);
+    });
     
     yPosition += 5;
     doc.line(10, yPosition, 280, yPosition);
@@ -142,14 +171,42 @@ export default function ListaInteressados() {
         yPosition = 20;
       }
       
-      doc.text(interessado.nome_completo.substring(0, 15), 10, yPosition);
-      doc.text(interessado.telefone, 60, yPosition);
-      doc.text((interessado.endereco || '').substring(0, 12), 100, yPosition);
-      doc.text(interessado.cidade.substring(0, 10), 140, yPosition);
-      doc.text(`${interessado.status}`, 170, yPosition);
-      doc.text(interessado.instrutor_biblico.substring(0, 10), 200, yPosition);
-      doc.text(interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-', 230, yPosition);
-      doc.text((interessado.frequenta_cultos || '').substring(0, 8), 250, yPosition);
+      selectedColumns.forEach((col, index) => {
+        let value = '';
+        switch (col.key) {
+          case 'nome_completo':
+            value = interessado.nome_completo.substring(0, 15);
+            break;
+          case 'telefone':
+            value = interessado.telefone;
+            break;
+          case 'endereco':
+            value = (interessado.endereco || '').substring(0, 12);
+            break;
+          case 'cidade':
+            value = interessado.cidade.substring(0, 10);
+            break;
+          case 'status':
+            value = `${interessado.status}`;
+            break;
+          case 'instrutor_biblico':
+            value = interessado.instrutor_biblico.substring(0, 10);
+            break;
+          case 'data_contato':
+            value = interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-';
+            break;
+          case 'frequenta_cultos':
+            value = (interessado.frequenta_cultos || '').substring(0, 8);
+            break;
+          case 'estudo_biblico':
+            value = (interessado.estudo_biblico || '').substring(0, 10);
+            break;
+          case 'observacoes':
+            value = (interessado.observacoes || '').substring(0, 15);
+            break;
+        }
+        doc.text(value, 10 + (index * columnWidth), yPosition);
+      });
       
       yPosition += 8;
     });
@@ -157,6 +214,7 @@ export default function ListaInteressados() {
     const fileName = `relatorio-interessados-${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
 
+    setIsColumnSelectorOpen(false);
     toast({
       title: "Relatório PDF Gerado!",
       description: "O relatório em PDF foi baixado com sucesso."
@@ -221,7 +279,7 @@ export default function ListaInteressados() {
                   Importar
                 </Button>
                 <Button 
-                  onClick={generatePDFReport}
+                  onClick={openColumnSelector}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
@@ -338,6 +396,15 @@ export default function ListaInteressados() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Column Selector Dialog */}
+      <ColumnSelector
+        isOpen={isColumnSelectorOpen}
+        onClose={() => setIsColumnSelectorOpen(false)}
+        columns={reportColumns}
+        onColumnsChange={setReportColumns}
+        onGenerate={generatePDFReport}
+      />
     </div>
   );
 }
