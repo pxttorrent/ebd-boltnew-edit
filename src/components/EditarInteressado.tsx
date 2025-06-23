@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -47,10 +46,10 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.telefone || !formData.cidade || !formData.status || !formData.instrutor_biblico) {
+    if (!formData.nome_completo || !formData.cidade) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        description: "Por favor, preencha todos os campos obrigatórios (Nome e Igreja).",
         variant: "destructive"
       });
       return;
@@ -84,14 +83,13 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
 
         <div>
           <Label htmlFor="edit_telefone" className="text-sm font-medium text-gray-700 mb-2 block">
-            Telefone *
+            Telefone
           </Label>
           <Input
             id="edit_telefone"
             value={formData.telefone}
             onChange={handlePhoneChange}
             placeholder="(99)99999-9999"
-            required
             maxLength={14}
           />
         </div>
@@ -130,7 +128,7 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
 
         <div>
           <Label htmlFor="edit_status" className="text-sm font-medium text-gray-700 mb-2 block">
-            Qual a situação atual deste interessado? *
+            Qual a situação atual deste interessado?
           </Label>
           <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Interessado['status'] })}>
             <SelectTrigger>
@@ -150,7 +148,7 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="edit_instrutor_biblico" className="text-sm font-medium text-gray-700 mb-2 block">
-            Instrutor Bíblico *
+            Instrutor Bíblico
           </Label>
           <Select value={formData.instrutor_biblico} onValueChange={(value) => setFormData({ ...formData, instrutor_biblico: value })}>
             <SelectTrigger>

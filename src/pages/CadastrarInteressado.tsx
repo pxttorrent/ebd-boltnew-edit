@@ -41,10 +41,10 @@ export default function CadastrarInteressado() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.telefone || !formData.cidade || !formData.status || !formData.instrutor_biblico) {
+    if (!formData.nome_completo || !formData.cidade) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        description: "Por favor, preencha todos os campos obrigatórios (Nome e Igreja).",
         variant: "destructive"
       });
       return;
@@ -53,7 +53,8 @@ export default function CadastrarInteressado() {
     const novoInteressado: Interessado = {
       id: Date.now().toString(),
       ...formData,
-      status: formData.status as Interessado['status'],
+      status: formData.status as Interessado['status'] || 'E',
+      instrutor_biblico: formData.instrutor_biblico || 'A definir',
       frequenta_cultos: formData.frequenta_cultos
     };
 
@@ -104,14 +105,13 @@ export default function CadastrarInteressado() {
 
               <div>
                 <Label htmlFor="telefone" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Telefone *
+                  Telefone
                 </Label>
                 <Input
                   id="telefone"
                   value={formData.telefone}
                   onChange={handlePhoneChange}
                   placeholder="(99)99999-9999"
-                  required
                   maxLength={14}
                 />
               </div>
@@ -150,7 +150,7 @@ export default function CadastrarInteressado() {
 
               <div>
                 <Label htmlFor="status" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Qual a situação atual deste interessado? *
+                  Qual a situação atual deste interessado?
                 </Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Interessado['status'] })}>
                   <SelectTrigger>
@@ -170,7 +170,7 @@ export default function CadastrarInteressado() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="instrutor_biblico" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Instrutor Bíblico *
+                  Instrutor Bíblico
                 </Label>
                 <Select value={formData.instrutor_biblico} onValueChange={(value) => setFormData({ ...formData, instrutor_biblico: value })}>
                   <SelectTrigger>
