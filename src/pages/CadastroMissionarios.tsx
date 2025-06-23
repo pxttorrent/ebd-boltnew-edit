@@ -205,24 +205,24 @@ export default function CadastroMissionarios() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Foto de Perfil */}
-              <div className="space-y-2">
-                <Label>Foto de Perfil</Label>
-                <div className="flex flex-col items-center gap-3">
-                  <Avatar className="w-20 h-20">
+              {/* Foto de Perfil - Moved to the top and made more prominent */}
+              <div className="space-y-3 border-b border-gray-200 pb-4">
+                <Label className="text-base font-semibold text-gray-700">Foto de Perfil (Opcional)</Label>
+                <div className="flex flex-col items-center gap-4">
+                  <Avatar className="w-24 h-24 border-2 border-gray-200">
                     <AvatarImage src={formData.foto_perfil} />
-                    <AvatarFallback className="text-lg">
-                      {formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    <AvatarFallback className="text-lg bg-gray-100">
+                      {formData.nome_completo ? formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase() : 'Foto'}
                     </AvatarFallback>
                   </Avatar>
 
                   {isCapturing ? (
-                    <div className="space-y-2">
-                      <video ref={videoRef} autoPlay className="w-48 h-36 border rounded" />
+                    <div className="space-y-3">
+                      <video ref={videoRef} autoPlay className="w-48 h-36 border rounded-lg" />
                       <canvas ref={canvasRef} className="hidden" />
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-center">
                         <Button type="button" onClick={capturePhoto} size="sm">
-                          Capturar
+                          Capturar Foto
                         </Button>
                         <Button type="button" onClick={stopCamera} variant="outline" size="sm">
                           Cancelar
@@ -230,23 +230,37 @@ export default function CadastroMissionarios() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-center">
                       <Button 
                         type="button" 
                         onClick={() => fileInputRef.current?.click()} 
                         variant="outline" 
                         size="sm"
+                        className="flex items-center gap-2"
                       >
-                        <Upload className="w-4 h-4 mr-1" />
-                        Upload
+                        <Upload className="w-4 h-4" />
+                        Escolher da Galeria
                       </Button>
-                      <Button type="button" onClick={startCamera} variant="outline" size="sm">
-                        <Camera className="w-4 h-4 mr-1" />
-                        Câmera
+                      <Button 
+                        type="button" 
+                        onClick={startCamera} 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Tirar Foto
                       </Button>
                       {formData.foto_perfil && (
-                        <Button type="button" onClick={removeFoto} variant="outline" size="sm">
+                        <Button 
+                          type="button" 
+                          onClick={removeFoto} 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <X className="w-4 h-4" />
+                          Remover
                         </Button>
                       )}
                     </div>
