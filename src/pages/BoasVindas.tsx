@@ -91,14 +91,14 @@ export default function BoasVindas() {
           </p>
 
           {/* Verso Bíblico */}
-          <div className="bg-gradient-to-r from-blue-100 to-blue-50 rounded-xl p-6 mx-auto max-w-4xl border-l-4 border-blue-500 shadow-sm">
-            <div className="flex items-start gap-3">
-              <Quote className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
+          <div className="bg-gradient-to-r from-blue-100 to-blue-50 rounded-lg p-3 mx-auto max-w-2xl border-l-2 border-blue-500 shadow-sm">
+            <div className="flex items-start gap-2">
+              <Quote className="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" />
               <div className="text-left">
-                <p className="text-lg text-blue-900 font-medium italic leading-relaxed mb-2">
+                <p className="text-sm text-blue-900 font-medium italic leading-relaxed mb-1">
                   "{versoAtual.verso}"
                 </p>
-                <p className="text-blue-700 font-semibold">
+                <p className="text-xs text-blue-700 font-semibold">
                   - {versoAtual.referencia}
                 </p>
               </div>
