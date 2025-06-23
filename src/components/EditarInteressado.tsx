@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Interessado, StatusLabels, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { capitalizeWords } from '../utils/textUtils';
@@ -175,24 +173,25 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
 
       <div>
         <Label className="text-sm font-medium text-gray-700 mb-3 block">
-          Já está frequentando os cultos da igreja? 
+          O interessado participa dos encontros e eventos realizados pela igreja?
           <span className="text-xs text-gray-500 block mt-1">
             ("Não deixemos de congregar-nos, como é costume de alguns..." - Hebreus 10:25)
           </span>
         </Label>
-        <RadioGroup 
+        <Select 
           value={formData.frequenta_cultos?.toString()} 
-          onValueChange={(value) => setFormData({ ...formData, frequenta_cultos: value === 'true' })}
+          onValueChange={(value) => setFormData({ ...formData, frequenta_cultos: value })}
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="true" id="edit_frequenta_sim" />
-            <Label htmlFor="edit_frequenta_sim">Sim</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="false" id="edit_frequenta_nao" />
-            <Label htmlFor="edit_frequenta_nao">Não</Label>
-          </div>
-        </RadioGroup>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a frequência" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="frequentemente">Frequentemente</SelectItem>
+            <SelectItem value="algumas_vezes">Algumas vezes</SelectItem>
+            <SelectItem value="raramente">Raramente</SelectItem>
+            <SelectItem value="nunca">Nunca</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>

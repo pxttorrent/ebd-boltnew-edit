@@ -73,7 +73,7 @@ export default function ListaInteressados() {
       'Status': `${interessado.status} - ${StatusLabels[interessado.status]}`,
       'Instrutor Bíblico': interessado.instrutor_biblico,
       'Data do Contato': interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '',
-      'Frequenta Cultos': interessado.frequenta_cultos ? 'Sim' : 'Não',
+      'Participação em Eventos': interessado.frequenta_cultos || 'Não informado',
       'Estudo Bíblico': interessado.estudo_biblico || '',
       'Observações': interessado.observacoes || ''
     }));
@@ -92,7 +92,7 @@ export default function ListaInteressados() {
       { wch: 25 }, // Status
       { wch: 20 }, // Instrutor Bíblico
       { wch: 12 }, // Data do Contato
-      { wch: 15 }, // Frequenta Cultos
+      { wch: 20 }, // Participação em Eventos
       { wch: 25 }, // Estudo Bíblico
       { wch: 40 }  // Observações
     ];

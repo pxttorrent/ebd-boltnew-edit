@@ -26,7 +26,7 @@ export interface Interessado {
   instrutor_biblico: string;
   data_contato: string;
   observacoes: string;
-  frequenta_cultos?: boolean;
+  frequenta_cultos?: string;
   estudo_biblico?: string;
 }
 
