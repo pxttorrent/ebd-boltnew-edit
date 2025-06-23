@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
 const menuItems = [
@@ -48,10 +49,16 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { currentUser, setCurrentUser } = useApp();
+  const { signOut } = useAuth();
   const { state } = useSidebar();
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   return (
