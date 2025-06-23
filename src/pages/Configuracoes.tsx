@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -7,12 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Usuario } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Save, CheckCircle, XCircle } from 'lucide-react';
+import { Save, CheckCircle, XCircle, Edit, Trash } from 'lucide-react';
+import EditarMissionario from '../components/EditarMissionario';
 
 export default function Configuracoes() {
-  const { usuarios, updateUsuario } = useApp();
+  const { usuarios, updateUsuario, deleteUsuario } = useApp();
   const { toast } = useToast();
   const [localUsuarios, setLocalUsuarios] = useState<Usuario[]>([]);
+  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
 
   // Sincronizar com o contexto sempre que usuarios mudar
   useEffect(() => {
@@ -66,6 +67,20 @@ export default function Configuracoes() {
     });
   };
 
+  const handleEdit = (usuario: Usuario) => {
+    setEditingUsuario(usuario);
+  };
+
+  const handleDelete = (id: string, nome: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir ${nome}?`)) {
+      deleteUsuario(id);
+      toast({
+        title: "Sucesso!",
+        description: "Usuário excluído com sucesso."
+      });
+    }
+  };
+
   const permissionLabels = {
     pode_cadastrar: 'Pode Cadastrar',
     pode_editar: 'Pode Editar',
@@ -116,6 +131,7 @@ export default function Configuracoes() {
                       <TableHead className="font-semibold text-gray-700">Nome</TableHead>
                       <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Ação</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-center">Gerenciar</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -149,6 +165,26 @@ export default function Configuracoes() {
                             </Button>
                           </div>
                         </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex gap-2 justify-center">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => handleEdit(usuario)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDelete(usuario.id, usuario.nome_completo)}
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -178,6 +214,7 @@ export default function Configuracoes() {
                       <TableHead className="font-semibold text-gray-700 text-center">Pode Editar</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Pode Excluir</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Pode Exportar</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -214,6 +251,26 @@ export default function Configuracoes() {
                             />
                           </TableCell>
                         ))}
+                        <TableCell className="text-center">
+                          <div className="flex gap-2 justify-center">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => handleEdit(usuario)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDelete(usuario.id, usuario.nome_completo)}
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -249,6 +306,15 @@ export default function Configuracoes() {
             </div>
           </div>
         </div>
+
+        {editingUsuario && (
+          <EditarMissionario
+            usuario={editingUsuario}
+            isOpen={!!editingUsuario}
+            onClose={() => setEditingUsuario(null)}
+            onSave={updateUsuario}
+          />
+        )}
       </div>
     </div>
   );
