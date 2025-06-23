@@ -1,6 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, Users, BookOpen, Settings, Quote } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const features = [
   {
@@ -70,11 +73,18 @@ const versosBiblicos = [
 
 export default function BoasVindas() {
   const [versoAtual, setVersoAtual] = useState(versosBiblicos[0]);
+  const { usuarios, interessados } = useApp();
 
   useEffect(() => {
     const indiceAleatorio = Math.floor(Math.random() * versosBiblicos.length);
     setVersoAtual(versosBiblicos[indiceAleatorio]);
   }, []);
+
+  // Calcular estatísticas
+  const numeroMissionarios = usuarios.filter(u => u.aprovado).length;
+  const numeroInteressados = interessados.length;
+  const missionariosAguardandoAprovacao = usuarios.filter(u => !u.aprovado).length;
+  const prontosParaBatismo = interessados.filter(i => i.status === 'A').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
@@ -98,6 +108,45 @@ export default function BoasVindas() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Cards de Estatísticas */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Missionários Ativos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{numeroMissionarios}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total de Interessados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{numeroInteressados}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Aguardando Aprovação</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{missionariosAguardandoAprovacao}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Prontos para Batismo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">{prontosParaBatismo}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Features Grid */}
