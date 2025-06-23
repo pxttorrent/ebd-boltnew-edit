@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -15,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,18 +60,12 @@ export function AppSidebar() {
       await signOut();
       setCurrentUser(null);
       
-      // Clear any stored user data
-      localStorage.removeItem('escola_biblica_usuario');
-      
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso."
       });
       
       console.log('Logout realizado com sucesso');
-      
-      // Redirect to login page
-      navigate('/', { replace: true });
       
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
