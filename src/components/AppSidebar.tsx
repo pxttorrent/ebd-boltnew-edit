@@ -12,6 +12,7 @@ import {
   SidebarTrigger,
   useSidebar
 } from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -95,10 +96,20 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-gray-200 p-4 space-y-4">
-        {currentUser && state === 'expanded' && (
-          <div className="text-sm">
-            <p className="font-medium text-gray-900">{currentUser.nome_completo}</p>
-            <p className="text-gray-500">{currentUser.igreja}</p>
+        {currentUser && (
+          <div className="flex items-center gap-3">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={currentUser.foto_perfil} />
+              <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                {currentUser.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {state === 'expanded' && (
+              <div className="text-sm min-w-0 flex-1">
+                <p className="font-medium text-gray-900 truncate">{currentUser.nome_completo}</p>
+                <p className="text-gray-500 truncate">{currentUser.igreja}</p>
+              </div>
+            )}
           </div>
         )}
         
