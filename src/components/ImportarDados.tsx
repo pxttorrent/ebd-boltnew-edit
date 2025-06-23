@@ -59,44 +59,51 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
         try {
           const rowData = row as any;
           
-          // Mapear campos do Excel para o formato do sistema
+          // Mapear campos do Excel para o formato do sistema - sendo mais tolerante
           const interessado: Interessado = {
             id: generateId(),
-            nome_completo: capitalizeWords(rowData['Nome Completo'] || ''),
+            nome_completo: capitalizeWords(rowData['Nome Completo'] || rowData['Nome'] || ''),
             telefone: formatPhone(rowData['Telefone'] || ''),
-            endereco: rowData['Endereço'] || '',
-            cidade: rowData['Cidade'] || '',
-            status: rowData['Status']?.charAt(0) || 'E',
-            instrutor_biblico: rowData['Instrutor Bíblico'] || '',
-            data_contato: rowData['Data do Contato'] ? new Date(rowData['Data do Contato']).toISOString().split('T')[0] : '',
-            frequenta_cultos: rowData['Participação em Eventos'] || '',
-            estudo_biblico: rowData['Estudo Bíblico'] || '',
-            observacoes: rowData['Observações'] || ''
+            endereco: rowData['Endereço'] || rowData['Endereco'] || '',
+            cidade: rowData['Igreja'] || rowData['Cidade'] || 'Armour', // Default para Armour se não especificado
+            status: (rowData['Status']?.toString().charAt(0) || 'E') as Interessado['status'],
+            instrutor_biblico: rowData['Instrutor Bíblico'] || rowData['Instrutor'] || 'A definir',
+            data_contato: rowData['Data do Contato'] || rowData['Data'] ? 
+              (rowData['Data do Contato'] || rowData['Data']).toString().includes('/') ?
+                new Date(rowData['Data do Contato'] || rowData['Data']).toISOString().split('T')[0] :
+                rowData['Data do Contato'] || rowData['Data'] :
+              '',
+            frequenta_cultos: rowData['Participação em Eventos'] || rowData['Participacao'] || '',
+            estudo_biblico: rowData['Estudo Bíblico'] || rowData['Estudo'] || '',
+            observacoes: rowData['Observações'] || rowData['Observacoes'] || ''
           };
 
-          // Validar campos obrigatórios
-          if (interessado.nome_completo && interessado.telefone && interessado.cidade && interessado.instrutor_biblico) {
+          // Validar apenas campos mínimos essenciais
+          if (interessado.nome_completo.trim() && interessado.telefone.trim()) {
             addInteressado(interessado);
             imported++;
           } else {
+            console.log('Registro ignorado - falta nome ou telefone:', rowData);
             errors++;
           }
         } catch (error) {
+          console.log('Erro ao processar linha:', error, row);
           errors++;
         }
       }
 
       toast({
         title: "Importação Concluída",
-        description: `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros com erro.` : ''}`
+        description: `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros ignorados por falta de dados essenciais (nome e telefone).` : ''}`
       });
 
       onClose();
       setFile(null);
     } catch (error) {
+      console.log('Erro na importação:', error);
       toast({
         title: "Erro na Importação",
-        description: "Erro ao processar o arquivo. Verifique o formato.",
+        description: "Erro ao processar o arquivo. Verifique se é um arquivo Excel válido.",
         variant: "destructive"
       });
     } finally {
@@ -114,7 +121,15 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
         <div className="space-y-4">
           <div className="text-sm text-gray-600">
             <p>Selecione um arquivo Excel (.xlsx) com os dados dos interessados.</p>
-            <p className="mt-2">O arquivo deve conter as colunas: Nome Completo, Telefone, Endereço, Cidade, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações.</p>
+            <p className="mt-2">
+              <strong>Campos obrigatórios:</strong> Nome Completo e Telefone
+            </p>
+            <p className="mt-1">
+              <strong>Campos opcionais:</strong> Endereço, Igreja, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
+            </p>
+            <p className="mt-2 text-xs text-blue-600">
+              * Se um instrutor não for encontrado, você poderá completar o cadastro depois na lista.
+            </p>
           </div>
           
           <div>

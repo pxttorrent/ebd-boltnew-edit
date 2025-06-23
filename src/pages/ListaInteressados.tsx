@@ -15,9 +15,10 @@ import ImportarDados from '../components/ImportarDados';
 import EdicaoRapida from '../components/EdicaoRapida';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
+import CadastroInstrutorInline from '../components/CadastroInstrutorInline';
 
 export default function ListaInteressados() {
-  const { interessados, deleteInteressado } = useApp();
+  const { interessados, deleteInteressado, usuarios } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -29,6 +30,9 @@ export default function ListaInteressados() {
   const [isEdicaoRapidaOpen, setIsEdicaoRapidaOpen] = useState(false);
   const [interessadoEdicaoRapida, setInteressadoEdicaoRapida] = useState<Interessado | null>(null);
   const [campoEdicaoRapida, setCampoEdicaoRapida] = useState<'status' | 'instrutor_biblico' | 'frequenta_cultos' | null>(null);
+  const [isCadastroInstrutorOpen, setIsCadastroInstrutorOpen] = useState(false);
+  const [instrutorParaCadastro, setInstrutorParaCadastro] = useState('');
+  const [interessadoParaAtualizarInstrutor, setInteressadoParaAtualizarInstrutor] = useState<Interessado | null>(null);
 
   // Definir colunas disponíveis para o relatório
   const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
@@ -224,6 +228,32 @@ export default function ListaInteressados() {
     });
   };
 
+  const handleInstrutorClick = (interessado: Interessado) => {
+    // Verificar se o instrutor existe na lista de usuários
+    const instrutorExiste = usuarios.some(usuario => 
+      usuario.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()
+    );
+
+    if (!instrutorExiste && interessado.instrutor_biblico !== 'A definir') {
+      setInstrutorParaCadastro(interessado.instrutor_biblico);
+      setInteressadoParaAtualizarInstrutor(interessado);
+      setIsCadastroInstrutorOpen(true);
+    } else {
+      // Se existe, fazer edição rápida normal
+      handleEdicaoRapida(interessado, 'instrutor_biblico');
+    }
+  };
+
+  const handleInstrutorCadastrado = (nomeCompleto: string) => {
+    if (interessadoParaAtualizarInstrutor) {
+      // Atualizar o interessado com o nome do instrutor cadastrado
+      // Isso já está correto, só fechamos os modais
+      setIsCadastroInstrutorOpen(false);
+      setInstrutorParaCadastro('');
+      setInteressadoParaAtualizarInstrutor(null);
+    }
+  };
+
   const handleEdicaoRapida = (interessado: Interessado, campo: 'status' | 'instrutor_biblico' | 'frequenta_cultos') => {
     setInteressadoEdicaoRapida(interessado);
     setCampoEdicaoRapida(campo);
@@ -359,11 +389,25 @@ export default function ListaInteressados() {
                         </TableCell>
                         <TableCell>
                           <div 
-                            className="cursor-pointer hover:text-blue-600 hover:underline"
-                            onClick={() => handleEdicaoRapida(interessado, 'instrutor_biblico')}
-                            title="Clique para editar"
+                            className={`cursor-pointer hover:text-blue-600 hover:underline ${
+                              !usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
+                              interessado.instrutor_biblico !== 'A definir' 
+                                ? 'text-red-600 font-medium' 
+                                : ''
+                            }`}
+                            onClick={() => handleInstrutorClick(interessado)}
+                            title={
+                              !usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
+                              interessado.instrutor_biblico !== 'A definir'
+                                ? "Instrutor não cadastrado - Clique para cadastrar"
+                                : "Clique para editar"
+                            }
                           >
                             {interessado.instrutor_biblico}
+                            {!usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
+                             interessado.instrutor_biblico !== 'A definir' && (
+                              <span className="text-xs block">📝 Cadastrar</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
@@ -449,6 +493,14 @@ export default function ListaInteressados() {
         onClose={() => setIsEdicaoRapidaOpen(false)}
         interessado={interessadoEdicaoRapida}
         campo={campoEdicaoRapida}
+      />
+
+      {/* Cadastro Instrutor Inline Dialog */}
+      <CadastroInstrutorInline
+        isOpen={isCadastroInstrutorOpen}
+        onClose={() => setIsCadastroInstrutorOpen(false)}
+        nomeInstrutor={instrutorParaCadastro}
+        onInstrutorCadastrado={handleInstrutorCadastrado}
       />
     </div>
   );
