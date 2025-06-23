@@ -64,11 +64,11 @@ const Login = () => {
           {!showRecuperarSenha ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="apelido">Apelido</Label>
+                <Label htmlFor="apelido">Usuário</Label>
                 <Input
                   id="apelido"
                   type="text"
-                  placeholder="Digite seu apelido"
+                  placeholder="Digite seu usuário"
                   value={loginData.apelido}
                   onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value }))}
                   required
