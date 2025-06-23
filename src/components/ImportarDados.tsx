@@ -30,6 +30,10 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
     }
   };
 
+  const generateId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  };
+
   const processImportData = async () => {
     if (!file) {
       toast({
@@ -56,7 +60,8 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           const rowData = row as any;
           
           // Mapear campos do Excel para o formato do sistema
-          const interessado: Partial<Interessado> = {
+          const interessado: Interessado = {
+            id: generateId(),
             nome_completo: capitalizeWords(rowData['Nome Completo'] || ''),
             telefone: formatPhone(rowData['Telefone'] || ''),
             endereco: rowData['Endereço'] || '',
@@ -71,7 +76,7 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
 
           // Validar campos obrigatórios
           if (interessado.nome_completo && interessado.telefone && interessado.cidade && interessado.instrutor_biblico) {
-            addInteressado(interessado as Omit<Interessado, 'id'>);
+            addInteressado(interessado);
             imported++;
           } else {
             errors++;
