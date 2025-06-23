@@ -5,6 +5,7 @@ export interface Usuario {
   apelido: string;
   login_acesso: string;
   senha: string;
+  email_pessoal?: string;
   igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
   aprovado: boolean;
   foto_perfil?: string;

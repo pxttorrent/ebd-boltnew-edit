@@ -9,6 +9,7 @@ import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import CadastroMissionarioPublico from '../components/CadastroMissionarioPublico';
+import RecuperarSenha from '../components/RecuperarSenha';
 
 const Login = () => {
   const [loginData, setLoginData] = useState({ apelido: '', senha: '' });
@@ -66,17 +67,12 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleRecuperarSenha = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "Entre em contato com o administrador para recuperar sua senha.",
-      variant: "destructive"
-    });
-  };
-
   if (showCadastro) {
     return <CadastroMissionarioPublico onVoltar={() => setShowCadastro(false)} />;
+  }
+
+  if (showRecuperarSenha) {
+    return <RecuperarSenha onVoltar={() => setShowRecuperarSenha(false)} />;
   }
 
   return (
@@ -93,89 +89,72 @@ const Login = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {!showRecuperarSenha ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="apelido">Usuário</Label>
-                <Input
-                  id="apelido"
-                  type="text"
-                  placeholder="Digite seu usuário"
-                  value={loginData.apelido}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value }))}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="senha">Senha</Label>
-                <div className="relative">
-                  <Input
-                    id="senha"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Digite sua senha"
-                    value={loginData.senha}
-                    onChange={(e) => setLoginData(prev => ({ ...prev, senha: e.target.value }))}
-                    required
-                    disabled={loading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="lembrar-usuario"
-                  checked={lembrarUsuario}
-                  onCheckedChange={(checked) => setLembrarUsuario(checked as boolean)}
-                  disabled={loading}
-                />
-                <Label 
-                  htmlFor="lembrar-usuario" 
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Lembrar usuário
-                </Label>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="apelido">Usuário</Label>
+              <Input
+                id="apelido"
+                type="text"
+                placeholder="Digite seu usuário"
+                value={loginData.apelido}
+                onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value }))}
+                required
                 disabled={loading}
-              >
-                {loading ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleRecuperarSenha} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-recuperacao">Email de recuperação</Label>
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <div className="relative">
                 <Input
-                  id="email-recuperacao"
-                  type="email"
-                  placeholder="seu.email@exemplo.com"
+                  id="senha"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Digite sua senha"
+                  value={loginData.senha}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, senha: e.target.value }))}
                   required
+                  disabled={loading}
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </Button>
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Enviar link de recuperação
-              </Button>
-            </form>
-          )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="lembrar-usuario"
+                checked={lembrarUsuario}
+                onCheckedChange={(checked) => setLembrarUsuario(checked as boolean)}
+                disabled={loading}
+              />
+              <Label 
+                htmlFor="lembrar-usuario" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                Lembrar usuário
+              </Label>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </Button>
+          </form>
 
           <div className="flex flex-col space-y-2 pt-4 border-t">
             <Button
@@ -189,11 +168,11 @@ const Login = () => {
             
             <Button
               variant="ghost"
-              onClick={() => setShowRecuperarSenha(!showRecuperarSenha)}
+              onClick={() => setShowRecuperarSenha(true)}
               className="w-full text-sm text-gray-600"
               disabled={loading}
             >
-              {showRecuperarSenha ? 'Voltar ao login' : 'Recuperar senha'}
+              Esqueci minha senha
             </Button>
           </div>
         </CardContent>

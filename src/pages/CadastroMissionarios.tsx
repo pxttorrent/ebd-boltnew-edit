@@ -24,6 +24,7 @@ export default function CadastroMissionarios() {
     nome_completo: '',
     apelido: '',
     senha: '',
+    email_pessoal: '',
     igreja: '' as Usuario['igreja'] | '',
     foto_perfil: ''
   });
@@ -76,10 +77,21 @@ export default function CadastroMissionarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
+    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.email_pessoal || !formData.igreja) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validação de e-mail
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email_pessoal)) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um e-mail válido.",
         variant: "destructive"
       });
       return;
@@ -112,6 +124,7 @@ export default function CadastroMissionarios() {
           apelido: formData.apelido,
           login_acesso,
           senha: hashedPassword,
+          email_pessoal: formData.email_pessoal,
           igreja: formData.igreja,
           foto_perfil: formData.foto_perfil || null,
           aprovado: true // Admin is creating, so auto-approve
@@ -162,6 +175,7 @@ export default function CadastroMissionarios() {
         nome_completo: '',
         apelido: '',
         senha: '',
+        email_pessoal: '',
         igreja: '' as Usuario['igreja'] | '',
         foto_perfil: ''
       });
@@ -295,6 +309,24 @@ export default function CadastroMissionarios() {
                   required
                   disabled={loading}
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="email_pessoal" className="text-sm font-medium text-gray-700 mb-2 block">
+                  E-mail Pessoal *
+                </Label>
+                <Input
+                  id="email_pessoal"
+                  type="email"
+                  value={formData.email_pessoal}
+                  onChange={(e) => setFormData({ ...formData, email_pessoal: e.target.value })}
+                  placeholder="seu.email@exemplo.com"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este e-mail será usado para recuperação de senha
+                </p>
               </div>
 
               <div>

@@ -22,6 +22,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
     nome_completo: '',
     apelido: '',
     senha: '',
+    email_pessoal: '',
     igreja: '' as any,
     foto_perfil: ''
   });
@@ -74,10 +75,21 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
+    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.email_pessoal || !formData.igreja) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validação de e-mail
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email_pessoal)) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um e-mail válido.",
         variant: "destructive"
       });
       return;
@@ -99,6 +111,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       console.log('Iniciando cadastro de missionário:', {
         nome: formData.nome_completo,
         apelido: formData.apelido,
+        email_pessoal: formData.email_pessoal,
         igreja: formData.igreja
       });
       
@@ -107,6 +120,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
         apelido: formData.apelido,
         login_acesso: `${formData.apelido}@escola-biblica.app`,
         senha: formData.senha,
+        email_pessoal: formData.email_pessoal,
         igreja: formData.igreja,
         foto_perfil: formData.foto_perfil,
         aprovado: false // Sempre inicia como não aprovado
@@ -273,6 +287,22 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
               />
               <p className="text-xs text-gray-500">
                 Apenas letras minúsculas, números e pontos são permitidos
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email_pessoal">E-mail Pessoal *</Label>
+              <Input
+                id="email_pessoal"
+                type="email"
+                value={formData.email_pessoal}
+                onChange={(e) => setFormData(prev => ({ ...prev, email_pessoal: e.target.value }))}
+                placeholder="seu.email@exemplo.com"
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500">
+                Este e-mail será usado para recuperação de senha
               </p>
             </div>
 

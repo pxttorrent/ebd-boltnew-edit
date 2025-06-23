@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      codigos_recuperacao: {
+        Row: {
+          codigo: string
+          created_at: string
+          email_pessoal: string
+          expires_at: string
+          id: string
+          usado: boolean
+          usuario_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          email_pessoal: string
+          expires_at: string
+          id?: string
+          usado?: boolean
+          usuario_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          email_pessoal?: string
+          expires_at?: string
+          id?: string
+          usado?: boolean
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codigos_recuperacao_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interessados: {
         Row: {
           cidade: string
@@ -103,6 +141,7 @@ export type Database = {
           apelido: string
           aprovado: boolean
           created_at: string
+          email_pessoal: string | null
           foto_perfil: string | null
           id: string
           igreja: string
@@ -115,6 +154,7 @@ export type Database = {
           apelido: string
           aprovado?: boolean
           created_at?: string
+          email_pessoal?: string | null
           foto_perfil?: string | null
           id?: string
           igreja: string
@@ -127,6 +167,7 @@ export type Database = {
           apelido?: string
           aprovado?: boolean
           created_at?: string
+          email_pessoal?: string | null
           foto_perfil?: string | null
           id?: string
           igreja?: string

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Usuario, Interessado } from '../types';
 import { hashPassword } from '../utils/passwordUtils';
@@ -37,6 +38,7 @@ export const addUsuario = async (usuario: Omit<Usuario, 'id'>) => {
       apelido: usuario.apelido,
       login_acesso: usuario.login_acesso,
       senha: hashedPassword, // Store hashed password
+      email_pessoal: usuario.email_pessoal,
       igreja: usuario.igreja,
       foto_perfil: usuario.foto_perfil,
       aprovado: usuario.aprovado
@@ -68,8 +70,8 @@ export const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
 
   // Update usuario table
   if (updates.nome_completo || updates.apelido || updates.login_acesso || 
-      updates.senha || updates.igreja || updates.foto_perfil !== undefined || 
-      updates.aprovado !== undefined) {
+      updates.senha || updates.email_pessoal !== undefined || updates.igreja || 
+      updates.foto_perfil !== undefined || updates.aprovado !== undefined) {
     const { error } = await supabase
       .from('usuarios')
       .update({
@@ -77,6 +79,7 @@ export const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
         ...(updates.apelido && { apelido: updates.apelido }),
         ...(updates.login_acesso && { login_acesso: updates.login_acesso }),
         ...(updates.senha && { senha: updates.senha }),
+        ...(updates.email_pessoal !== undefined && { email_pessoal: updates.email_pessoal }),
         ...(updates.igreja && { igreja: updates.igreja }),
         ...(updates.foto_perfil !== undefined && { foto_perfil: updates.foto_perfil }),
         ...(updates.aprovado !== undefined && { aprovado: updates.aprovado })

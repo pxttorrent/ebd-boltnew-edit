@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
     nome_completo: usuario.nome_completo,
     apelido: usuario.apelido,
     senha: '',
+    email_pessoal: usuario.email_pessoal || '',
     igreja: usuario.igreja,
     foto_perfil: usuario.foto_perfil || ''
   });
@@ -120,12 +122,26 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
       return;
     }
 
+    // Validação de e-mail se preenchido
+    if (formData.email_pessoal) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email_pessoal)) {
+        toast({
+          title: "Erro",
+          description: "Por favor, insira um e-mail válido.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     const login_acesso = `${formData.apelido}@escola-biblica.app`;
     
     let updateData: any = {
       nome_completo: formData.nome_completo,
       apelido: formData.apelido,
       login_acesso,
+      email_pessoal: formData.email_pessoal,
       igreja: formData.igreja,
       foto_perfil: formData.foto_perfil
     };
@@ -238,6 +254,20 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
               onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email_pessoal">E-mail Pessoal</Label>
+            <Input
+              id="email_pessoal"
+              type="email"
+              value={formData.email_pessoal}
+              onChange={(e) => setFormData(prev => ({ ...prev, email_pessoal: e.target.value }))}
+              placeholder="seu.email@exemplo.com"
+            />
+            <p className="text-xs text-gray-500">
+              Este e-mail será usado para recuperação de senha
+            </p>
           </div>
 
           <div className="space-y-2">
