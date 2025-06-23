@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { StatusLabels, StatusColors, Interessado } from '../types';
 import { Search, Download, Upload, Edit, Trash, Filter, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
+import jsPDF from 'jspdf';
 
 export default function ListaInteressados() {
   const { interessados, deleteInteressado } = useApp();
@@ -77,38 +77,55 @@ export default function ListaInteressados() {
   };
 
   const generatePDFReport = () => {
-    // Criar o conteúdo do relatório
-    const reportContent = `
-      RELATÓRIO DE INTERESSADOS
-      =========================
+    const doc = new jsPDF();
+    
+    // Configurar fonte
+    doc.setFontSize(16);
+    doc.text('RELATÓRIO DE INTERESSADOS', 20, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Total de Interessados: ${filteredInteressados.length}`, 20, 35);
+    doc.text(`Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
+    
+    // Cabeçalhos da tabela
+    doc.setFontSize(10);
+    let yPosition = 65;
+    
+    // Cabeçalho
+    doc.text('Nome', 10, yPosition);
+    doc.text('Telefone', 60, yPosition);
+    doc.text('Cidade', 100, yPosition);
+    doc.text('Status', 140, yPosition);
+    doc.text('Instrutor', 170, yPosition);
+    
+    // Linha separadora
+    yPosition += 5;
+    doc.line(10, yPosition, 200, yPosition);
+    yPosition += 10;
+    
+    // Dados dos interessados
+    filteredInteressados.forEach((interessado, index) => {
+      if (yPosition > 280) { // Nova página se necessário
+        doc.addPage();
+        yPosition = 20;
+      }
       
-      Total de Interessados: ${filteredInteressados.length}
-      Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}
+      doc.text(interessado.nome_completo.substring(0, 20), 10, yPosition);
+      doc.text(interessado.telefone, 60, yPosition);
+      doc.text(interessado.cidade.substring(0, 15), 100, yPosition);
+      doc.text(`${interessado.status} - ${StatusLabels[interessado.status].substring(0, 10)}`, 140, yPosition);
+      doc.text(interessado.instrutor_biblico.substring(0, 15), 170, yPosition);
       
-      ${filteredInteressados.map(interessado => `
-      Nome: ${interessado.nome_completo}
-      Telefone: ${interessado.telefone}
-      Cidade: ${interessado.cidade}
-      Status: ${interessado.status} - ${StatusLabels[interessado.status]}
-      Instrutor: ${interessado.instrutor_biblico}
-      Data Contato: ${interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}
-      Observações: ${interessado.observacoes || 'Nenhuma'}
-      -----------------------------------
-      `).join('')}
-    `;
-
-    // Criar elemento para download
-    const element = document.createElement('a');
-    const file = new Blob([reportContent], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `relatorio-interessados-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+      yPosition += 8;
+    });
+    
+    // Salvar o PDF
+    const fileName = `relatorio-interessados-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
 
     toast({
-      title: "Relatório Gerado!",
-      description: "O relatório foi baixado com sucesso."
+      title: "Relatório PDF Gerado!",
+      description: "O relatório em PDF foi baixado com sucesso."
     });
   };
 
