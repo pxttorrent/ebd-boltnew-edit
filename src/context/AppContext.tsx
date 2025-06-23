@@ -53,10 +53,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       // Load usuarios and find current user
       const usuariosData = await db.fetchUsuarios();
-      setUsuarios(usuariosData);
+      // Transform data to match our types with proper type assertions
+      const typedUsuarios: Usuario[] = usuariosData.map(user => ({
+        ...user,
+        igreja: user.igreja as Usuario['igreja'],
+        permissoes: user.permissoes
+      }));
+      setUsuarios(typedUsuarios);
       
       // Find current user by matching auth user metadata
-      const currentUserData = usuariosData.find(u => 
+      const currentUserData = typedUsuarios.find(u => 
         user?.user_metadata?.apelido === u.apelido ||
         user?.email === u.login_acesso
       );
@@ -64,7 +70,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // Load interessados
       const interessadosData = await db.fetchInteressados();
-      setInteressados(interessadosData);
+      // Transform data to match our types with proper type assertions
+      const typedInteressados: Interessado[] = interessadosData.map(interessado => ({
+        ...interessado,
+        status: interessado.status as Interessado['status']
+      }));
+      setInteressados(typedInteressados);
 
     } catch (error: any) {
       console.error('Error loading data:', error);
