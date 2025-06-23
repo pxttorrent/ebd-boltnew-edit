@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppProvider, useApp } from "./context/AppContext";
 import { AppSidebar } from "./components/AppSidebar";
 import BoasVindas from "./pages/BoasVindas";
@@ -29,14 +29,22 @@ const AppContent = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <Routes>
-            <Route path="/" element={<BoasVindas />} />
-            <Route path="/cadastrar-interessado" element={<CadastrarInteressado />} />
-            <Route path="/interessados" element={<ListaInteressados />} />
-            <Route path="/missionarios" element={<CadastroMissionarios />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-gray-900">Escola Bíblica Distrital</h2>
+            </div>
+          </header>
+          <main className="flex-1 overflow-auto">
+            <Routes>
+              <Route path="/" element={<BoasVindas />} />
+              <Route path="/cadastrar-interessado" element={<CadastrarInteressado />} />
+              <Route path="/interessados" element={<ListaInteressados />} />
+              <Route path="/missionarios" element={<CadastroMissionarios />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
         </SidebarInset>
       </div>
     </SidebarProvider>

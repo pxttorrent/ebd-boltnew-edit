@@ -54,7 +54,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-gray-200">
+    <Sidebar className="border-r border-gray-200" collapsible="icon">
       <SidebarHeader className="border-b border-gray-200 p-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -75,7 +75,7 @@ export function AppSidebar() {
             const isActive = location.pathname === item.url;
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={isActive}>
+                <SidebarMenuButton asChild isActive={isActive} tooltip={state === 'collapsed' ? item.title : undefined}>
                   <Link
                     to={item.url}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
@@ -112,7 +112,6 @@ export function AppSidebar() {
             <LogOut className="w-4 h-4" />
             {state === 'expanded' && <span>Sair</span>}
           </Button>
-          <SidebarTrigger className="ml-auto" />
         </div>
       </SidebarFooter>
     </Sidebar>
