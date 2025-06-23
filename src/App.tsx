@@ -5,16 +5,43 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppProvider } from "./context/AppContext";
+import { AppProvider, useApp } from "./context/AppContext";
 import { AppSidebar } from "./components/AppSidebar";
 import BoasVindas from "./pages/BoasVindas";
 import CadastrarInteressado from "./pages/CadastrarInteressado";
 import ListaInteressados from "./pages/ListaInteressados";
 import CadastroMissionarios from "./pages/CadastroMissionarios";
 import Configuracoes from "./pages/Configuracoes";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  const { currentUser } = useApp();
+
+  if (!currentUser) {
+    return <Login />;
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <Routes>
+            <Route path="/" element={<BoasVindas />} />
+            <Route path="/cadastrar-interessado" element={<CadastrarInteressado />} />
+            <Route path="/interessados" element={<ListaInteressados />} />
+            <Route path="/missionarios" element={<CadastroMissionarios />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,21 +50,7 @@ const App = () => (
       <Sonner />
       <AppProvider>
         <BrowserRouter>
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <AppSidebar />
-              <SidebarInset className="flex-1">
-                <Routes>
-                  <Route path="/" element={<BoasVindas />} />
-                  <Route path="/cadastrar-interessado" element={<CadastrarInteressado />} />
-                  <Route path="/interessados" element={<ListaInteressados />} />
-                  <Route path="/missionarios" element={<CadastroMissionarios />} />
-                  <Route path="/configuracoes" element={<Configuracoes />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
+          <AppContent />
         </BrowserRouter>
       </AppProvider>
     </TooltipProvider>

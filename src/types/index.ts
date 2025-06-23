@@ -6,6 +6,7 @@ export interface Usuario {
   login_acesso: string;
   senha: string;
   igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
+  aprovado: boolean;
   permissoes: {
     pode_cadastrar: boolean;
     pode_editar: boolean;

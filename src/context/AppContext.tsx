@@ -36,6 +36,7 @@ const mockUsuarios: Usuario[] = [
     login_acesso: 'joao.silva@escola-biblica.app',
     senha: '123456',
     igreja: 'Armour',
+    aprovado: true,
     permissoes: {
       pode_cadastrar: true,
       pode_editar: true,
@@ -50,6 +51,7 @@ const mockUsuarios: Usuario[] = [
     login_acesso: 'maria.costa@escola-biblica.app',
     senha: '123456',
     igreja: 'Dom Pedrito',
+    aprovado: true,
     permissoes: {
       pode_cadastrar: true,
       pode_editar: true,
