@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -10,11 +11,13 @@ import { Usuario, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle, Upload, X } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
+import { hashPassword } from '../utils/passwordUtils';
+import { supabase } from '@/integrations/supabase/client';
 import EditarMissionario from '../components/EditarMissionario';
 import FotoCropper from '../components/FotoCropper';
 
 export default function CadastroMissionarios() {
-  const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useApp();
+  const { usuarios, updateUsuario, deleteUsuario, refreshData } = useApp();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -26,6 +29,7 @@ export default function CadastroMissionarios() {
   });
 
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState('');
@@ -69,7 +73,7 @@ export default function CadastroMissionarios() {
     setFormData(prev => ({ ...prev, foto_perfil: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
@@ -91,38 +95,81 @@ export default function CadastroMissionarios() {
       return;
     }
 
-    const novoUsuario: Usuario = {
-      id: Date.now().toString(),
-      nome_completo: formData.nome_completo,
-      apelido: formData.apelido,
-      login_acesso,
-      senha: formData.senha,
-      igreja: formData.igreja as Usuario['igreja'],
-      foto_perfil: formData.foto_perfil,
-      aprovado: true,
-      permissoes: {
-        pode_cadastrar: true,
-        pode_editar: true,
-        pode_excluir: false,
-        pode_exportar: true
+    setLoading(true);
+
+    try {
+      console.log('Iniciando cadastro de missionário...');
+      
+      // Hash password before storing
+      const hashedPassword = await hashPassword(formData.senha);
+      
+      // Insert directly into Supabase usuarios table
+      const { data: usuario, error: insertError } = await supabase
+        .from('usuarios')
+        .insert({
+          nome_completo: formData.nome_completo,
+          apelido: formData.apelido,
+          login_acesso,
+          senha: hashedPassword,
+          igreja: formData.igreja,
+          foto_perfil: formData.foto_perfil,
+          aprovado: true // Admin is creating, so auto-approve
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Erro ao inserir usuário:', insertError);
+        throw insertError;
       }
-    };
 
-    addUsuario(novoUsuario);
-    
-    toast({
-      title: "Sucesso!",
-      description: "Missionário cadastrado com sucesso."
-    });
+      console.log('Usuário inserido com sucesso:', usuario);
 
-    // Reset form
-    setFormData({
-      nome_completo: '',
-      apelido: '',
-      senha: '',
-      igreja: '' as Usuario['igreja'] | '',
-      foto_perfil: ''
-    });
+      // Insert default permissions with admin privileges
+      const { error: permissionsError } = await supabase
+        .from('usuario_permissoes')
+        .insert({
+          usuario_id: usuario.id,
+          pode_cadastrar: true,
+          pode_editar: true,
+          pode_excluir: false,
+          pode_exportar: true
+        });
+
+      if (permissionsError) {
+        console.error('Erro ao inserir permissões:', permissionsError);
+        throw permissionsError;
+      }
+
+      console.log('Permissões inseridas com sucesso');
+
+      // Refresh data to update the UI
+      await refreshData();
+      
+      toast({
+        title: "Sucesso!",
+        description: "Missionário cadastrado com sucesso."
+      });
+
+      // Reset form
+      setFormData({
+        nome_completo: '',
+        apelido: '',
+        senha: '',
+        igreja: '' as Usuario['igreja'] | '',
+        foto_perfil: ''
+      });
+
+    } catch (error: any) {
+      console.error('Erro durante o cadastro:', error);
+      toast({
+        title: "Erro no Cadastro",
+        description: error.message || "Erro inesperado ao cadastrar missionário.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (usuario: Usuario) => {
@@ -159,7 +206,8 @@ export default function CadastroMissionarios() {
                   <p className="font-medium mb-2">Instruções para o Administrador:</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Preencha e salve os dados no formulário abaixo</li>
-                    <li>Use o "Login de Acesso" gerado para convidar o usuário através do painel de administração principal da plataforma</li>
+                    <li>O missionário será cadastrado e aprovado automaticamente</li>
+                    <li>Use o "Login de Acesso" gerado para informar ao usuário suas credenciais</li>
                   </ol>
                 </div>
               </div>
@@ -184,6 +232,7 @@ export default function CadastroMissionarios() {
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-2"
+                      disabled={loading}
                     >
                       <Upload className="w-4 h-4" />
                       Escolher da Galeria
@@ -195,6 +244,7 @@ export default function CadastroMissionarios() {
                         variant="outline" 
                         size="sm"
                         className="text-red-600 hover:text-red-700"
+                        disabled={loading}
                       >
                         <X className="w-4 h-4" />
                         Remover
@@ -208,6 +258,7 @@ export default function CadastroMissionarios() {
                     accept="image/*"
                     onChange={handleFileUpload}
                     className="hidden"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -222,6 +273,7 @@ export default function CadastroMissionarios() {
                   onChange={handleNomeChange}
                   placeholder="Digite o nome completo"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -235,6 +287,7 @@ export default function CadastroMissionarios() {
                   onChange={(e) => setFormData({ ...formData, apelido: e.target.value.toLowerCase() })}
                   placeholder="Ex: joao.silva"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -262,6 +315,7 @@ export default function CadastroMissionarios() {
                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
                   placeholder="Digite a senha"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -269,7 +323,11 @@ export default function CadastroMissionarios() {
                 <Label htmlFor="igreja" className="text-sm font-medium text-gray-700 mb-2 block">
                   Igreja *
                 </Label>
-                <Select value={formData.igreja} onValueChange={(value) => setFormData({ ...formData, igreja: value as Usuario['igreja'] })}>
+                <Select 
+                  value={formData.igreja} 
+                  onValueChange={(value) => setFormData({ ...formData, igreja: value as Usuario['igreja'] })}
+                  disabled={loading}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a igreja" />
                   </SelectTrigger>
@@ -286,8 +344,9 @@ export default function CadastroMissionarios() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-3 rounded-lg"
+                disabled={loading}
               >
-                Cadastrar Missionário
+                {loading ? 'Cadastrando...' : 'Cadastrar Missionário'}
               </Button>
             </form>
           </div>
