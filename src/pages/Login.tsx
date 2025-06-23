@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -15,8 +16,24 @@ const Login = () => {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lembrarCredenciais, setLembrarCredenciais] = useState(false);
   const { signIn } = useAuth();
   const { toast } = useToast();
+
+  // Carregar credenciais salvas ao inicializar
+  useEffect(() => {
+    const credenciaisSalvas = localStorage.getItem('escola_biblica_credenciais');
+    if (credenciaisSalvas) {
+      try {
+        const { apelido, senha } = JSON.parse(credenciaisSalvas);
+        setLoginData({ apelido, senha });
+        setLembrarCredenciais(true);
+      } catch (error) {
+        console.error('Erro ao carregar credenciais salvas:', error);
+        localStorage.removeItem('escola_biblica_credenciais');
+      }
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +48,16 @@ const Login = () => {
         variant: "destructive"
       });
     } else {
+      // Salvar ou remover credenciais baseado na checkbox
+      if (lembrarCredenciais) {
+        localStorage.setItem('escola_biblica_credenciais', JSON.stringify({
+          apelido: loginData.apelido,
+          senha: loginData.senha
+        }));
+      } else {
+        localStorage.removeItem('escola_biblica_credenciais');
+      }
+
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao sistema."
@@ -109,6 +136,21 @@ const Login = () => {
                     )}
                   </Button>
                 </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="lembrar-credenciais"
+                  checked={lembrarCredenciais}
+                  onCheckedChange={(checked) => setLembrarCredenciais(checked as boolean)}
+                  disabled={loading}
+                />
+                <Label 
+                  htmlFor="lembrar-credenciais" 
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Lembrar credenciais
+                </Label>
               </div>
 
               <Button 
