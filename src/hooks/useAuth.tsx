@@ -76,9 +76,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('Password verified, attempting Supabase auth...');
 
-      // Try to sign in with Supabase Auth using the login_acesso as email
+      // Create a proper email format for Supabase Auth if login_acesso is not an email
+      let emailForAuth = usuario.login_acesso;
+      if (!emailForAuth.includes('@')) {
+        emailForAuth = `${usuario.login_acesso}@escola-biblica-local.com`;
+      }
+
+      // Try to sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: usuario.login_acesso,
+        email: emailForAuth,
         password: senha
       });
 
@@ -87,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // If auth user doesn't exist, create one
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: usuario.login_acesso,
+          email: emailForAuth,
           password: senha,
           options: {
             data: {
@@ -107,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // If sign up was successful, try to sign in again
         if (signUpData.user) {
           const { error: secondSignInError } = await supabase.auth.signInWithPassword({
-            email: usuario.login_acesso,
+            email: emailForAuth,
             password: senha
           });
           
@@ -135,6 +141,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Hash the password before storing
       const hashedPassword = await hashPassword(userData.senha);
+      
+      // Create a proper email format for Supabase Auth if login_acesso is not an email
+      let emailForAuth = userData.login_acesso;
+      if (!emailForAuth.includes('@')) {
+        emailForAuth = `${userData.login_acesso}@escola-biblica-local.com`;
+      }
       
       // Insert into usuarios table directly (now allowed by RLS policy)
       const { data: usuario, error: insertError } = await supabase
@@ -185,7 +197,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Clear local storage
+    localStorage.removeItem('escola_biblica_usuario');
+    
+    // Sign out from Supabase
     await supabase.auth.signOut();
+    
+    // Force page reload to ensure clean state
+    window.location.href = '/';
   };
 
   return (
