@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -17,6 +16,7 @@ import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react'
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
   {
@@ -51,13 +51,30 @@ export function AppSidebar() {
   const { currentUser, setCurrentUser } = useApp();
   const { signOut } = useAuth();
   const { state } = useSidebar();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
+      console.log('Iniciando logout...');
       await signOut();
       setCurrentUser(null);
+      
+      // Clear any stored user data
+      localStorage.removeItem('escola_biblica_usuario');
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      });
+      
+      console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+      toast({
+        title: "Erro no Logout",
+        description: "Ocorreu um erro ao fazer logout. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
