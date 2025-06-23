@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext';
 import CadastroMissionarioPublico from '../components/CadastroMissionarioPublico';
 
 const Login = () => {
-  const [loginData, setLoginData] = useState({ login: '', senha: '' });
+  const [loginData, setLoginData] = useState({ apelido: '', senha: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
@@ -21,12 +21,12 @@ const Login = () => {
     setError('');
 
     const usuario = usuarios.find(u => 
-      u.login_acesso === loginData.login && 
+      u.apelido === loginData.apelido && 
       u.senha === loginData.senha
     );
 
     if (!usuario) {
-      setError('Login ou senha incorretos');
+      setError('Apelido ou senha incorretos');
       return;
     }
 
@@ -64,13 +64,13 @@ const Login = () => {
           {!showRecuperarSenha ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login">Usuário</Label>
+                <Label htmlFor="apelido">Apelido</Label>
                 <Input
-                  id="login"
+                  id="apelido"
                   type="text"
-                  placeholder="seu.usuario@escola-biblica.app"
-                  value={loginData.login}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, login: e.target.value }))}
+                  placeholder="Digite seu apelido"
+                  value={loginData.apelido}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value }))}
                   required
                 />
               </div>
