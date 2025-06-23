@@ -35,7 +35,7 @@ export default function ListaInteressados() {
     { key: 'nome_completo', label: 'Nome Completo', selected: true },
     { key: 'telefone', label: 'Telefone', selected: true },
     { key: 'endereco', label: 'Endereço', selected: true },
-    { key: 'cidade', label: 'Cidade', selected: true },
+    { key: 'cidade', label: 'Igreja', selected: true },
     { key: 'status', label: 'Status', selected: true },
     { key: 'instrutor_biblico', label: 'Instrutor Bíblico', selected: true },
     { key: 'data_contato', label: 'Data do Contato', selected: true },
@@ -91,7 +91,7 @@ export default function ListaInteressados() {
       'Nome Completo': interessado.nome_completo,
       'Telefone': interessado.telefone,
       'Endereço': interessado.endereco || '',
-      'Cidade': interessado.cidade,
+      'Igreja': interessado.cidade,
       'Status': `${interessado.status} - ${StatusLabels[interessado.status]}`,
       'Instrutor Bíblico': interessado.instrutor_biblico,
       'Data do Contato': interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '',
@@ -244,7 +244,7 @@ export default function ListaInteressados() {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Buscar por nome, telefone ou cidade..."
+                    placeholder="Buscar por nome, telefone ou igreja..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -270,10 +270,10 @@ export default function ListaInteressados() {
 
                   <Select value={cidadeFilter} onValueChange={setCidadeFilter}>
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Cidade" />
+                      <SelectValue placeholder="Igreja" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todas">Todas as Cidades</SelectItem>
+                      <SelectItem value="todas">Todas as Igrejas</SelectItem>
                       {cidadesUnicas.map(cidade => (
                         <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
                       ))}
@@ -329,7 +329,7 @@ export default function ListaInteressados() {
                       <TableHead className="font-semibold text-gray-700 min-w-[200px]">Nome</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[120px]">Telefone</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[200px]">Endereço</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Cidade</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Igreja</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[180px]">Status</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[150px]">Instrutor</TableHead>
                       <TableHead className="font-semibold text-gray-700 min-w-[120px]">Data Contato</TableHead>

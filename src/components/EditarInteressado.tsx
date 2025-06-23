@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -111,11 +112,11 @@ export default function EditarInteressado({ interessado, onSave, onCancel }: Edi
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="edit_cidade" className="text-sm font-medium text-gray-700 mb-2 block">
-            Cidade *
+            Igreja *
           </Label>
           <Select value={formData.cidade} onValueChange={(value) => setFormData({ ...formData, cidade: value })}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione a cidade" />
+              <SelectValue placeholder="Selecione a igreja" />
             </SelectTrigger>
             <SelectContent>
               {IgrejaOptions.map((cidade) => (
