@@ -9,7 +9,134 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      interessados: {
+        Row: {
+          cidade: string
+          created_at: string
+          data_contato: string
+          endereco: string | null
+          estudo_biblico: string | null
+          frequenta_cultos: string | null
+          id: string
+          instrutor_biblico: string
+          nome_completo: string
+          observacoes: string | null
+          status: string
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          data_contato: string
+          endereco?: string | null
+          estudo_biblico?: string | null
+          frequenta_cultos?: string | null
+          id?: string
+          instrutor_biblico: string
+          nome_completo: string
+          observacoes?: string | null
+          status: string
+          telefone: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          data_contato?: string
+          endereco?: string | null
+          estudo_biblico?: string | null
+          frequenta_cultos?: string | null
+          id?: string
+          instrutor_biblico?: string
+          nome_completo?: string
+          observacoes?: string | null
+          status?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuario_permissoes: {
+        Row: {
+          created_at: string
+          id: string
+          pode_cadastrar: boolean
+          pode_editar: boolean
+          pode_excluir: boolean
+          pode_exportar: boolean
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pode_cadastrar?: boolean
+          pode_editar?: boolean
+          pode_excluir?: boolean
+          pode_exportar?: boolean
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pode_cadastrar?: boolean
+          pode_editar?: boolean
+          pode_excluir?: boolean
+          pode_exportar?: boolean
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_permissoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: true
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuarios: {
+        Row: {
+          apelido: string
+          aprovado: boolean
+          created_at: string
+          foto_perfil: string | null
+          id: string
+          igreja: string
+          login_acesso: string
+          nome_completo: string
+          senha: string
+          updated_at: string
+        }
+        Insert: {
+          apelido: string
+          aprovado?: boolean
+          created_at?: string
+          foto_perfil?: string | null
+          id?: string
+          igreja: string
+          login_acesso: string
+          nome_completo: string
+          senha: string
+          updated_at?: string
+        }
+        Update: {
+          apelido?: string
+          aprovado?: boolean
+          created_at?: string
+          foto_perfil?: string | null
+          id?: string
+          igreja?: string
+          login_acesso?: string
+          nome_completo?: string
+          senha?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

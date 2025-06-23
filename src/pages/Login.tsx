@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Eye, EyeOff } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import CadastroMissionarioPublico from '../components/CadastroMissionarioPublico';
 
 const Login = () => {
@@ -13,34 +14,39 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
-  const [error, setError] = useState('');
-  const { usuarios, setCurrentUser } = useApp();
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setLoading(true);
 
-    const usuario = usuarios.find(u => 
-      u.apelido === loginData.apelido && 
-      u.senha === loginData.senha
-    );
+    const { error } = await signIn(loginData.apelido, loginData.senha);
 
-    if (!usuario) {
-      setError('Apelido ou senha incorretos');
-      return;
+    if (error) {
+      toast({
+        title: "Erro no Login",
+        description: error,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao sistema."
+      });
     }
 
-    if (!usuario.aprovado) {
-      setError('Sua conta ainda não foi aprovada pelo administrador. Aguarde a aprovação.');
-      return;
-    }
-
-    setCurrentUser(usuario);
+    setLoading(false);
   };
 
   const handleRecuperarSenha = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Funcionalidade de recuperação de senha será implementada em breve. Entre em contato com o administrador.');
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "Entre em contato com o administrador para recuperar sua senha.",
+      variant: "destructive"
+    });
   };
 
   if (showCadastro) {
@@ -58,6 +64,13 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Escola Bíblica Distrital</CardTitle>
           <CardDescription>Faça login para acessar o sistema</CardDescription>
+          
+          {/* Credenciais de teste */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
+            <p className="font-semibold text-blue-800 mb-1">Credenciais de teste:</p>
+            <p className="text-blue-700">Usuário: <span className="font-mono">admin</span></p>
+            <p className="text-blue-700">Senha: <span className="font-mono">password</span></p>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -72,6 +85,7 @@ const Login = () => {
                   value={loginData.apelido}
                   onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value }))}
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -85,6 +99,7 @@ const Login = () => {
                     value={loginData.senha}
                     onChange={(e) => setLoginData(prev => ({ ...prev, senha: e.target.value }))}
                     required
+                    disabled={loading}
                   />
                   <Button
                     type="button"
@@ -92,6 +107,7 @@ const Login = () => {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 text-gray-400" />
@@ -102,14 +118,12 @@ const Login = () => {
                 </div>
               </div>
 
-              {error && (
-                <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Entrar
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
           ) : (
@@ -134,6 +148,7 @@ const Login = () => {
               variant="outline"
               onClick={() => setShowCadastro(true)}
               className="w-full"
+              disabled={loading}
             >
               Cadastrar Missionário
             </Button>
@@ -142,6 +157,7 @@ const Login = () => {
               variant="ghost"
               onClick={() => setShowRecuperarSenha(!showRecuperarSenha)}
               className="w-full text-sm text-gray-600"
+              disabled={loading}
             >
               {showRecuperarSenha ? 'Voltar ao login' : 'Recuperar senha'}
             </Button>

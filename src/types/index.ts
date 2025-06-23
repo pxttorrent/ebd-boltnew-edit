@@ -7,7 +7,9 @@ export interface Usuario {
   senha: string;
   igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
   aprovado: boolean;
-  foto_perfil?: string; // URL da foto em base64 ou URL
+  foto_perfil?: string;
+  created_at?: string;
+  updated_at?: string;
   permissoes: {
     pode_cadastrar: boolean;
     pode_editar: boolean;
@@ -25,9 +27,11 @@ export interface Interessado {
   status: 'A' | 'B' | 'C' | 'D' | 'E';
   instrutor_biblico: string;
   data_contato: string;
-  observacoes: string;
+  observacoes?: string;
   frequenta_cultos?: string;
   estudo_biblico?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const StatusLabels = {

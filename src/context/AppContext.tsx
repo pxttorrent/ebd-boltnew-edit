@@ -1,176 +1,248 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '../hooks/useAuth';
+import * as db from '../services/database';
 
 interface AppContextType {
-  currentUser: Usuario | null;
-  setCurrentUser: (user: Usuario | null) => void;
+  // Usuario management
   usuarios: Usuario[];
-  setUsuarios: (usuarios: Usuario[]) => void;
+  currentUser: Usuario | null;
+  addUsuario: (usuario: Usuario) => Promise<void>;
+  updateUsuario: (id: string, updates: Partial<Usuario>) => Promise<void>;
+  deleteUsuario: (id: string) => Promise<void>;
+  setCurrentUser: (user: Usuario | null) => void;
+
+  // Interessado management
   interessados: Interessado[];
-  setInteressados: (interessados: Interessado[]) => void;
-  addUsuario: (usuario: Usuario) => void;
-  updateUsuario: (id: string, usuario: Partial<Usuario>) => void;
-  deleteUsuario: (id: string) => void;
-  addInteressado: (interessado: Interessado) => void;
-  updateInteressado: (id: string, interessado: Partial<Interessado>) => void;
-  deleteInteressado: (id: string) => void;
+  addInteressado: (interessado: Interessado) => Promise<void>;
+  updateInteressado: (id: string, updates: Partial<Interessado>) => Promise<void>;
+  deleteInteressado: (id: string) => Promise<void>;
+
+  // Loading states
+  loading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
-};
-
-// Dados mock para demonstração
-const mockUsuarios: Usuario[] = [
-  {
-    id: 'admin',
-    nome_completo: 'Administrador do Sistema',
-    apelido: 'admin',
-    login_acesso: 'admin',
-    senha: 'admin',
-    igreja: 'Armour',
-    aprovado: true,
-    permissoes: {
-      pode_cadastrar: true,
-      pode_editar: true,
-      pode_excluir: true,
-      pode_exportar: true
-    }
-  },
-  {
-    id: '1',
-    nome_completo: 'João Silva',
-    apelido: 'joao.silva',
-    login_acesso: 'joao.silva@escola-biblica.app',
-    senha: '123456',
-    igreja: 'Armour',
-    aprovado: true,
-    permissoes: {
-      pode_cadastrar: true,
-      pode_editar: true,
-      pode_excluir: true,
-      pode_exportar: true
-    }
-  },
-  {
-    id: '2',
-    nome_completo: 'Maria Costa',
-    apelido: 'maria.costa',
-    login_acesso: 'maria.costa@escola-biblica.app',
-    senha: '123456',
-    igreja: 'Dom Pedrito',
-    aprovado: true,
-    permissoes: {
-      pode_cadastrar: true,
-      pode_editar: true,
-      pode_excluir: false,
-      pode_exportar: true
-    }
-  }
-];
-
-const mockInteressados: Interessado[] = [
-  {
-    id: '1',
-    nome_completo: 'Ana Santos',
-    telefone: '(53) 99999-9999',
-    endereco: 'Rua das Flores, 123',
-    cidade: 'Santana do Livramento',
-    status: 'D',
-    instrutor_biblico: 'João Silva',
-    data_contato: '2024-06-01',
-    observacoes: 'Muito interessada nos estudos bíblicos',
-    frequenta_cultos: 'frequentemente',
-    estudo_biblico: 'Estudo sobre a Criação'
-  },
-  {
-    id: '2',
-    nome_completo: 'Pedro Oliveira',
-    telefone: '(53) 88888-8888',
-    endereco: 'Av. Principal, 456',
-    cidade: 'Dom Pedrito',
-    status: 'B',
-    instrutor_biblico: 'Maria Costa',
-    data_contato: '2024-05-15',
-    observacoes: 'Decidido pelo batismo, aguardando resolver questões familiares',
-    frequenta_cultos: 'raramente',
-    estudo_biblico: 'Estudo sobre o Batismo'
-  }
-];
-
-export const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [interessados, setInteressados] = useState<Interessado[]>([]);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
-  const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
-  const [interessados, setInteressados] = useState<Interessado[]>(mockInteressados);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Debug: log quando usuarios muda
+  // Load data when user is authenticated
   useEffect(() => {
-    console.log('Usuarios atualizados:', usuarios.length, 'usuários');
-    usuarios.forEach(u => console.log('- ', u.nome_completo, u.login_acesso));
-  }, [usuarios]);
+    if (user) {
+      loadData();
+    } else {
+      setUsuarios([]);
+      setInteressados([]);
+      setCurrentUser(null);
+      setLoading(false);
+    }
+  }, [user]);
 
-  const addUsuario = (usuario: Usuario) => {
-    console.log('Adicionando usuário:', usuario.nome_completo);
-    setUsuarios(prev => {
-      const novosUsuarios = [...prev, usuario];
-      console.log('Nova lista de usuários:', novosUsuarios.length);
-      return novosUsuarios;
-    });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load usuarios and find current user
+      const usuariosData = await db.fetchUsuarios();
+      setUsuarios(usuariosData);
+      
+      // Find current user by matching auth user metadata
+      const currentUserData = usuariosData.find(u => 
+        user?.user_metadata?.apelido === u.apelido ||
+        user?.email === u.login_acesso
+      );
+      setCurrentUser(currentUserData || null);
+
+      // Load interessados
+      const interessadosData = await db.fetchInteressados();
+      setInteressados(interessadosData);
+
+    } catch (error: any) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateUsuario = (id: string, updatedUsuario: Partial<Usuario>) => {
-    console.log('Atualizando usuário:', id);
-    setUsuarios(prev => 
-      prev.map(usuario => 
-        usuario.id === id ? { ...usuario, ...updatedUsuario } : usuario
-      )
-    );
+  const refreshData = async () => {
+    await loadData();
   };
 
-  const deleteUsuario = (id: string) => {
-    console.log('Excluindo usuário:', id);
-    setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
+  // Usuario operations
+  const addUsuario = async (usuario: Usuario) => {
+    try {
+      const newUsuario = await db.addUsuario(usuario);
+      setUsuarios(prev => [...prev, { ...usuario, id: newUsuario.id }]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Usuário adicionado com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error adding usuario:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao adicionar usuário",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
-  const addInteressado = (interessado: Interessado) => {
-    setInteressados(prev => [...prev, interessado]);
+  const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
+    try {
+      await db.updateUsuario(id, updates);
+      
+      setUsuarios(prev => 
+        prev.map(usuario => 
+          usuario.id === id ? { ...usuario, ...updates } : usuario
+        )
+      );
+
+      // Update current user if it's the same user
+      if (currentUser?.id === id) {
+        setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Usuário atualizado com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error updating usuario:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar usuário",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
-  const updateInteressado = (id: string, updatedInteressado: Partial<Interessado>) => {
-    setInteressados(prev => 
-      prev.map(interessado => 
-        interessado.id === id ? { ...interessado, ...updatedInteressado } : interessado
-      )
-    );
+  const deleteUsuario = async (id: string) => {
+    try {
+      await db.deleteUsuario(id);
+      setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Usuário excluído com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error deleting usuario:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir usuário",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
-  const deleteInteressado = (id: string) => {
-    setInteressados(prev => prev.filter(interessado => interessado.id !== id));
+  // Interessado operations
+  const addInteressado = async (interessado: Interessado) => {
+    try {
+      const newInteressado = await db.addInteressado(interessado);
+      setInteressados(prev => [...prev, { ...interessado, id: newInteressado.id }]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Interessado adicionado com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error adding interessado:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao adicionar interessado",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const updateInteressado = async (id: string, updates: Partial<Interessado>) => {
+    try {
+      await db.updateInteressado(id, updates);
+      
+      setInteressados(prev => 
+        prev.map(interessado => 
+          interessado.id === id ? { ...interessado, ...updates } : interessado
+        )
+      );
+
+      toast({
+        title: "Sucesso!",
+        description: "Interessado atualizado com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error updating interessado:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar interessado",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteInteressado = async (id: string) => {
+    try {
+      await db.deleteInteressado(id);
+      setInteressados(prev => prev.filter(interessado => interessado.id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Interessado excluído com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error deleting interessado:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir interessado",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
   return (
     <AppContext.Provider value={{
-      currentUser,
-      setCurrentUser,
       usuarios,
-      setUsuarios,
-      interessados,
-      setInteressados,
+      currentUser,
       addUsuario,
       updateUsuario,
       deleteUsuario,
+      setCurrentUser,
+      interessados,
       addInteressado,
       updateInteressado,
-      deleteInteressado
+      deleteInteressado,
+      loading,
+      refreshData
     }}>
       {children}
     </AppContext.Provider>
   );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
 };
