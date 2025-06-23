@@ -30,6 +30,21 @@ export const useApp = () => {
 // Dados mock para demonstração
 const mockUsuarios: Usuario[] = [
   {
+    id: 'admin',
+    nome_completo: 'Administrador do Sistema',
+    apelido: 'admin',
+    login_acesso: 'admin@escola-biblica.app',
+    senha: 'admin',
+    igreja: 'Armour',
+    aprovado: true,
+    permissoes: {
+      pode_cadastrar: true,
+      pode_editar: true,
+      pode_excluir: true,
+      pode_exportar: true
+    }
+  },
+  {
     id: '1',
     nome_completo: 'João Silva',
     apelido: 'joao.silva',
