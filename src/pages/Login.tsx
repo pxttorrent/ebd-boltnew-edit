@@ -16,21 +16,21 @@ const Login = () => {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [lembrarCredenciais, setLembrarCredenciais] = useState(false);
+  const [lembrarUsuario, setLembrarUsuario] = useState(false);
   const { signIn } = useAuth();
   const { toast } = useToast();
 
-  // Carregar credenciais salvas ao inicializar
+  // Carregar apenas o usuário salvo (sem senha)
   useEffect(() => {
-    const credenciaisSalvas = localStorage.getItem('escola_biblica_credenciais');
-    if (credenciaisSalvas) {
+    const usuarioSalvo = localStorage.getItem('escola_biblica_usuario');
+    if (usuarioSalvo) {
       try {
-        const { apelido, senha } = JSON.parse(credenciaisSalvas);
-        setLoginData({ apelido, senha });
-        setLembrarCredenciais(true);
+        const { apelido } = JSON.parse(usuarioSalvo);
+        setLoginData(prev => ({ ...prev, apelido }));
+        setLembrarUsuario(true);
       } catch (error) {
-        console.error('Erro ao carregar credenciais salvas:', error);
-        localStorage.removeItem('escola_biblica_credenciais');
+        console.error('Erro ao carregar usuário salvo:', error);
+        localStorage.removeItem('escola_biblica_usuario');
       }
     }
   }, []);
@@ -48,14 +48,13 @@ const Login = () => {
         variant: "destructive"
       });
     } else {
-      // Salvar ou remover credenciais baseado na checkbox
-      if (lembrarCredenciais) {
-        localStorage.setItem('escola_biblica_credenciais', JSON.stringify({
-          apelido: loginData.apelido,
-          senha: loginData.senha
+      // Salvar apenas o usuário se solicitado (nunca a senha)
+      if (lembrarUsuario) {
+        localStorage.setItem('escola_biblica_usuario', JSON.stringify({
+          apelido: loginData.apelido
         }));
       } else {
-        localStorage.removeItem('escola_biblica_credenciais');
+        localStorage.removeItem('escola_biblica_usuario');
       }
 
       toast({
@@ -140,16 +139,16 @@ const Login = () => {
 
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="lembrar-credenciais"
-                  checked={lembrarCredenciais}
-                  onCheckedChange={(checked) => setLembrarCredenciais(checked as boolean)}
+                  id="lembrar-usuario"
+                  checked={lembrarUsuario}
+                  onCheckedChange={(checked) => setLembrarUsuario(checked as boolean)}
                   disabled={loading}
                 />
                 <Label 
-                  htmlFor="lembrar-credenciais" 
+                  htmlFor="lembrar-usuario" 
                   className="text-sm font-normal cursor-pointer"
                 >
-                  Lembrar credenciais
+                  Lembrar usuário
                 </Label>
               </div>
 

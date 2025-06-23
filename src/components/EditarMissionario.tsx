@@ -9,6 +9,7 @@ import { Camera, Upload, X } from 'lucide-react';
 import { Usuario, IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
 import { useToast } from '@/hooks/use-toast';
+import { hashPassword } from '../utils/passwordUtils';
 
 interface EditarMissionarioProps {
   usuario: Usuario;
@@ -21,7 +22,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
   const [formData, setFormData] = useState({
     nome_completo: usuario.nome_completo,
     apelido: usuario.apelido,
-    senha: usuario.senha,
+    senha: '',
     igreja: usuario.igreja,
     foto_perfil: usuario.foto_perfil || ''
   });
@@ -107,10 +108,10 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
     setFormData(prev => ({ ...prev, foto_perfil: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.igreja) {
+    if (!formData.nome_completo || !formData.apelido || !formData.igreja) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -120,11 +121,31 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
     }
 
     const login_acesso = `${formData.apelido}@escola-biblica.app`;
+    
+    let updateData: any = {
+      nome_completo: formData.nome_completo,
+      apelido: formData.apelido,
+      login_acesso,
+      igreja: formData.igreja,
+      foto_perfil: formData.foto_perfil
+    };
 
-    onSave(usuario.id, {
-      ...formData,
-      login_acesso
-    });
+    // Only hash and update password if a new one was provided
+    if (formData.senha.trim()) {
+      try {
+        const hashedPassword = await hashPassword(formData.senha);
+        updateData.senha = hashedPassword;
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao processar senha. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    onSave(usuario.id, updateData);
 
     toast({
       title: "Sucesso!",
@@ -220,13 +241,13 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="senha">Senha *</Label>
+            <Label htmlFor="senha">Nova Senha (deixe em branco para manter atual)</Label>
             <Input
               id="senha"
               type="password"
+              placeholder="Digite nova senha ou deixe em branco"
               value={formData.senha}
               onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-              required
             />
           </div>
 

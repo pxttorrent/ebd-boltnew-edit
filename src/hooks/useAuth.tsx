@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { hashPassword, verifyPassword } from '@/utils/passwordUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -67,8 +68,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: 'Sua conta ainda não foi aprovada pelo administrador' };
       }
 
-      // Check password (direct comparison for now - in production use proper hashing)
-      if (senha !== usuario.senha) {
+      // Verify password using bcrypt
+      const isPasswordValid = await verifyPassword(senha, usuario.senha);
+      if (!isPasswordValid) {
         return { error: 'Senha incorreta' };
       }
 
@@ -131,6 +133,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       console.log('Starting signup process with data:', userData);
       
+      // Hash the password before storing
+      const hashedPassword = await hashPassword(userData.senha);
+      
       // Insert into usuarios table directly (now allowed by RLS policy)
       const { data: usuario, error: insertError } = await supabase
         .from('usuarios')
@@ -138,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           nome_completo: userData.nome_completo,
           apelido: userData.apelido,
           login_acesso: userData.login_acesso,
-          senha: userData.senha,
+          senha: hashedPassword, // Store hashed password
           igreja: userData.igreja,
           foto_perfil: userData.foto_perfil,
           aprovado: false // Needs admin approval

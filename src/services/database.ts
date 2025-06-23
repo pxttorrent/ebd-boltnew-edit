@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Usuario, Interessado } from '../types';
+import { hashPassword } from '../utils/passwordUtils';
 
 // Usuario operations
 export const fetchUsuarios = async () => {
@@ -27,13 +27,16 @@ export const fetchUsuarios = async () => {
 };
 
 export const addUsuario = async (usuario: Omit<Usuario, 'id'>) => {
+  // Hash password before storing
+  const hashedPassword = await hashPassword(usuario.senha);
+  
   const { data, error } = await supabase
     .from('usuarios')
     .insert({
       nome_completo: usuario.nome_completo,
       apelido: usuario.apelido,
       login_acesso: usuario.login_acesso,
-      senha: usuario.senha,
+      senha: hashedPassword, // Store hashed password
       igreja: usuario.igreja,
       foto_perfil: usuario.foto_perfil,
       aprovado: usuario.aprovado
@@ -58,6 +61,11 @@ export const addUsuario = async (usuario: Omit<Usuario, 'id'>) => {
 };
 
 export const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
+  // Hash password if it's being updated
+  if (updates.senha) {
+    updates.senha = await hashPassword(updates.senha);
+  }
+
   // Update usuario table
   if (updates.nome_completo || updates.apelido || updates.login_acesso || 
       updates.senha || updates.igreja || updates.foto_perfil !== undefined || 
