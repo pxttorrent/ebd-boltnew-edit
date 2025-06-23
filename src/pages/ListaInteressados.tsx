@@ -5,14 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StatusLabels, StatusColors } from '../types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { StatusLabels, StatusColors, Interessado } from '../types';
 import { Search, Download, Upload, Edit, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import EditarInteressado from '../components/EditarInteressado';
 
 export default function ListaInteressados() {
   const { interessados, deleteInteressado } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingInteressado, setEditingInteressado] = useState<Interessado | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const filteredInteressados = interessados.filter(interessado =>
     interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -28,6 +32,21 @@ export default function ListaInteressados() {
         description: "Interessado excluído com sucesso."
       });
     }
+  };
+
+  const handleEdit = (interessado: Interessado) => {
+    setEditingInteressado(interessado);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    setIsEditDialogOpen(false);
+    setEditingInteressado(null);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditDialogOpen(false);
+    setEditingInteressado(null);
   };
 
   const handleExport = () => {
@@ -112,10 +131,15 @@ export default function ListaInteressados() {
                         </Badge>
                       </TableCell>
                       <TableCell>{interessado.instrutor_biblico}</TableCell>
-                      <TableCell>{new Date(interessado.data_contato).toLocaleDateString('pt-BR')}</TableCell>
+                      <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleEdit(interessado)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
@@ -136,6 +160,22 @@ export default function ListaInteressados() {
           </div>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Interessado</DialogTitle>
+          </DialogHeader>
+          {editingInteressado && (
+            <EditarInteressado
+              interessado={editingInteressado}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

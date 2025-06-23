@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Interessado, StatusLabels } from '../types';
+import { Interessado, StatusLabels, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { capitalizeWords } from '../utils/textUtils';
 
@@ -36,7 +36,7 @@ export default function CadastrarInteressado() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.telefone || !formData.cidade || !formData.status || !formData.instrutor_biblico || !formData.data_contato) {
+    if (!formData.nome_completo || !formData.telefone || !formData.cidade || !formData.status || !formData.instrutor_biblico) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -128,13 +128,18 @@ export default function CadastrarInteressado() {
                 <Label htmlFor="cidade" className="text-sm font-medium text-gray-700 mb-2 block">
                   Cidade *
                 </Label>
-                <Input
-                  id="cidade"
-                  value={formData.cidade}
-                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                  placeholder="Digite a cidade"
-                  required
-                />
+                <Select value={formData.cidade} onValueChange={(value) => setFormData({ ...formData, cidade: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IgrejaOptions.map((cidade) => (
+                      <SelectItem key={cidade} value={cidade}>
+                        {cidade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -177,14 +182,13 @@ export default function CadastrarInteressado() {
 
               <div>
                 <Label htmlFor="data_contato" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Data do Contato *
+                  Data do Primeiro Contato (Aproximadamente)
                 </Label>
                 <Input
                   id="data_contato"
                   type="date"
                   value={formData.data_contato}
                   onChange={(e) => setFormData({ ...formData, data_contato: e.target.value })}
-                  required
                 />
               </div>
             </div>
