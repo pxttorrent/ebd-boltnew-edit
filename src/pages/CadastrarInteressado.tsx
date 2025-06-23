@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Interessado, StatusLabels, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { capitalizeWords } from '../utils/textUtils';
+import { formatPhone } from '../utils/phoneUtils';
 
 export default function CadastrarInteressado() {
   const { usuarios, addInteressado } = useApp();
@@ -29,6 +30,11 @@ export default function CadastrarInteressado() {
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
     setFormData({ ...formData, nome_completo: capitalizedName });
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedPhone = formatPhone(e.target.value);
+    setFormData({ ...formData, telefone: formattedPhone });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,9 +108,10 @@ export default function CadastrarInteressado() {
                 <Input
                   id="telefone"
                   value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                  placeholder="(00) 00000-0000"
+                  onChange={handlePhoneChange}
+                  placeholder="(99)99999-9999"
                   required
+                  maxLength={14}
                 />
               </div>
             </div>
