@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,11 +112,6 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
                 placeholder="ex: joao.silva"
                 required
               />
-              {formData.apelido && (
-                <p className="text-sm text-gray-500">
-                  Seu login será: {formData.apelido}@escola-biblica.app
-                </p>
-              )}
             </div>
 
             <div className="space-y-2">
