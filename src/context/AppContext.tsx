@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Usuario, Interessado } from '../types';
 
 interface AppContextType {
@@ -109,11 +110,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
   const [interessados, setInteressados] = useState<Interessado[]>(mockInteressados);
 
+  // Debug: log quando usuarios muda
+  useEffect(() => {
+    console.log('Usuarios atualizados:', usuarios.length, 'usuários');
+    usuarios.forEach(u => console.log('- ', u.nome_completo, u.login_acesso));
+  }, [usuarios]);
+
   const addUsuario = (usuario: Usuario) => {
-    setUsuarios(prev => [...prev, usuario]);
+    console.log('Adicionando usuário:', usuario.nome_completo);
+    setUsuarios(prev => {
+      const novosUsuarios = [...prev, usuario];
+      console.log('Nova lista de usuários:', novosUsuarios.length);
+      return novosUsuarios;
+    });
   };
 
   const updateUsuario = (id: string, updatedUsuario: Partial<Usuario>) => {
+    console.log('Atualizando usuário:', id);
     setUsuarios(prev => 
       prev.map(usuario => 
         usuario.id === id ? { ...usuario, ...updatedUsuario } : usuario
@@ -122,6 +135,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteUsuario = (id: string) => {
+    console.log('Excluindo usuário:', id);
     setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
   };
 

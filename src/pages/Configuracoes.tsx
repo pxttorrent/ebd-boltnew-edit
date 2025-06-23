@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +12,13 @@ export default function Configuracoes() {
   const { usuarios, setUsuarios } = useApp();
   const { toast } = useToast();
   const [localUsuarios, setLocalUsuarios] = useState<Usuario[]>(usuarios);
+
+  // Debug: log dos usuários recebidos
+  useEffect(() => {
+    console.log('Configurações - Usuários recebidos do contexto:', usuarios.length);
+    usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ')'));
+    setLocalUsuarios(usuarios);
+  }, [usuarios]);
 
   const handlePermissionChange = (userId: string, permission: keyof Usuario['permissoes'], value: boolean) => {
     setLocalUsuarios(prev => 
@@ -51,6 +58,7 @@ export default function Configuracoes() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
                 <p className="text-gray-600">Gerencie as permissões dos usuários do sistema</p>
+                <p className="text-sm text-blue-600 mt-1">Total de usuários: {localUsuarios.length}</p>
               </div>
               <Button 
                 onClick={handleSaveChanges}
