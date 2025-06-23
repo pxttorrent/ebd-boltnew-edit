@@ -43,14 +43,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (apelido: string, senha: string) => {
     try {
       setLoading(true);
+      console.log('Attempting to sign in with apelido:', apelido);
+      
       // First, find the user by apelido
       const { data: usuario, error: userError } = await supabase
         .from('usuarios')
         .select('*')
         .eq('apelido', apelido)
-        .single();
+        .maybeSingle();
 
-      if (userError || !usuario) {
+      console.log('User query result:', { usuario, userError });
+
+      if (userError) {
+        console.error('Database error:', userError);
+        return { error: 'Erro ao conectar com o banco de dados' };
+      }
+
+      if (!usuario) {
         return { error: 'Usuário não encontrado' };
       }
 
@@ -63,15 +72,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: 'Senha incorreta' };
       }
 
-      // Create a custom session by setting the user ID
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log('Password verified, attempting Supabase auth...');
+
+      // Try to sign in with Supabase Auth using the login_acesso as email
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: usuario.login_acesso,
         password: senha
       });
 
-      if (error) {
+      if (authError) {
+        console.log('Auth user does not exist, creating one...', authError.message);
+        
         // If auth user doesn't exist, create one
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: usuario.login_acesso,
           password: senha,
           options: {
@@ -79,22 +92,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               usuario_id: usuario.id,
               nome_completo: usuario.nome_completo,
               apelido: usuario.apelido
-            }
+            },
+            emailRedirectTo: window.location.origin
           }
         });
 
-        if (!signUpError) {
-          // Now sign in
-          await supabase.auth.signInWithPassword({
+        if (signUpError) {
+          console.error('Sign up error:', signUpError);
+          return { error: signUpError.message };
+        }
+
+        // If sign up was successful, try to sign in again
+        if (signUpData.user) {
+          const { error: secondSignInError } = await supabase.auth.signInWithPassword({
             email: usuario.login_acesso,
             password: senha
           });
+          
+          if (secondSignInError) {
+            console.error('Second sign in error:', secondSignInError);
+            return { error: secondSignInError.message };
+          }
         }
       }
 
+      console.log('Authentication successful');
       return {};
     } catch (error: any) {
-      return { error: error.message };
+      console.error('Sign in error:', error);
+      return { error: error.message || 'Erro desconhecido durante o login' };
     } finally {
       setLoading(false);
     }
