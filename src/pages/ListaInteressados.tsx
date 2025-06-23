@@ -85,16 +85,8 @@ export default function ListaInteressados() {
 
     // Definir largura das colunas
     const columnWidths = [
-      { wch: 25 }, // Nome Completo
-      { wch: 15 }, // Telefone
-      { wch: 30 }, // Endereço
-      { wch: 20 }, // Cidade
-      { wch: 25 }, // Status
-      { wch: 20 }, // Instrutor Bíblico
-      { wch: 12 }, // Data do Contato
-      { wch: 20 }, // Participação em Eventos
-      { wch: 25 }, // Estudo Bíblico
-      { wch: 40 }  // Observações
+      { wch: 25 }, { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
+      { wch: 20 }, { wch: 12 }, { wch: 20 }, { wch: 25 }, { wch: 40 }
     ];
     worksheet['!cols'] = columnWidths;
 
@@ -118,9 +110,8 @@ export default function ListaInteressados() {
   };
 
   const generatePDFReport = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF('landscape'); // Mudei para paisagem para acomodar mais colunas
     
-    // Configurar fonte
     doc.setFontSize(16);
     doc.text('RELATÓRIO DE INTERESSADOS', 20, 20);
     
@@ -128,39 +119,41 @@ export default function ListaInteressados() {
     doc.text(`Total de Interessados: ${filteredInteressados.length}`, 20, 35);
     doc.text(`Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
     
-    // Cabeçalhos da tabela
-    doc.setFontSize(10);
+    doc.setFontSize(8); // Fonte menor para acomodar mais dados
     let yPosition = 65;
     
-    // Cabeçalho
+    // Cabeçalho expandido
     doc.text('Nome', 10, yPosition);
     doc.text('Telefone', 60, yPosition);
-    doc.text('Cidade', 100, yPosition);
-    doc.text('Status', 140, yPosition);
-    doc.text('Instrutor', 170, yPosition);
+    doc.text('Endereço', 100, yPosition);
+    doc.text('Cidade', 140, yPosition);
+    doc.text('Status', 170, yPosition);
+    doc.text('Instrutor', 200, yPosition);
+    doc.text('Data', 230, yPosition);
+    doc.text('Eventos', 250, yPosition);
     
-    // Linha separadora
     yPosition += 5;
-    doc.line(10, yPosition, 200, yPosition);
+    doc.line(10, yPosition, 280, yPosition);
     yPosition += 10;
     
-    // Dados dos interessados
-    filteredInteressados.forEach((interessado, index) => {
-      if (yPosition > 280) { // Nova página se necessário
+    filteredInteressados.forEach((interessado) => {
+      if (yPosition > 190) {
         doc.addPage();
         yPosition = 20;
       }
       
-      doc.text(interessado.nome_completo.substring(0, 20), 10, yPosition);
+      doc.text(interessado.nome_completo.substring(0, 15), 10, yPosition);
       doc.text(interessado.telefone, 60, yPosition);
-      doc.text(interessado.cidade.substring(0, 15), 100, yPosition);
-      doc.text(`${interessado.status} - ${StatusLabels[interessado.status].substring(0, 10)}`, 140, yPosition);
-      doc.text(interessado.instrutor_biblico.substring(0, 15), 170, yPosition);
+      doc.text((interessado.endereco || '').substring(0, 12), 100, yPosition);
+      doc.text(interessado.cidade.substring(0, 10), 140, yPosition);
+      doc.text(`${interessado.status}`, 170, yPosition);
+      doc.text(interessado.instrutor_biblico.substring(0, 10), 200, yPosition);
+      doc.text(interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-', 230, yPosition);
+      doc.text((interessado.frequenta_cultos || '').substring(0, 8), 250, yPosition);
       
       yPosition += 8;
     });
     
-    // Salvar o PDF
     const fileName = `relatorio-interessados-${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
 
@@ -251,7 +244,7 @@ export default function ListaInteressados() {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Table with horizontal scroll for all columns */}
           <div className="p-6">
             {filteredInteressados.length === 0 ? (
               <div className="text-center py-12">
@@ -262,55 +255,69 @@ export default function ListaInteressados() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-700">Nome</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Telefone</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Cidade</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Instrutor</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Data Contato</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInteressados.map((interessado) => (
-                    <TableRow key={interessado.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{interessado.nome_completo}</TableCell>
-                      <TableCell>{interessado.telefone}</TableCell>
-                      <TableCell>{interessado.cidade}</TableCell>
-                      <TableCell>
-                        <Badge className={StatusColors[interessado.status]}>
-                          {interessado.status} - {StatusLabels[interessado.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{interessado.instrutor_biblico}</TableCell>
-                      <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-blue-600 hover:text-blue-700"
-                            onClick={() => handleEdit(interessado)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleDelete(interessado.id, interessado.nome_completo)}
-                          >
-                            <Trash className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[1400px]">
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Nome</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Telefone</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Endereço</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Cidade</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[180px]">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[150px]">Instrutor</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Data Contato</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[150px]">Participação Eventos</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Estudo Bíblico</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[250px]">Observações</TableHead>
+                      <TableHead className="font-semibold text-gray-700 min-w-[100px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInteressados.map((interessado) => (
+                      <TableRow key={interessado.id} className="hover:bg-gray-50">
+                        <TableCell className="font-medium">{interessado.nome_completo}</TableCell>
+                        <TableCell>{interessado.telefone}</TableCell>
+                        <TableCell>{interessado.endereco || '-'}</TableCell>
+                        <TableCell>{interessado.cidade}</TableCell>
+                        <TableCell>
+                          <Badge className={StatusColors[interessado.status]}>
+                            {interessado.status} - {StatusLabels[interessado.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{interessado.instrutor_biblico}</TableCell>
+                        <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
+                        <TableCell>{interessado.frequenta_cultos || '-'}</TableCell>
+                        <TableCell>{interessado.estudo_biblico || '-'}</TableCell>
+                        <TableCell>
+                          <div className="max-w-[200px] truncate" title={interessado.observacoes}>
+                            {interessado.observacoes || '-'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => handleEdit(interessado)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDelete(interessado.id, interessado.nome_completo)}
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </div>
