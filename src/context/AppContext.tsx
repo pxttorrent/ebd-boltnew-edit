@@ -87,7 +87,7 @@ const mockInteressados: Interessado[] = [
     instrutor_biblico: 'João Silva',
     data_contato: '2024-06-01',
     observacoes: 'Muito interessada nos estudos bíblicos',
-    frequenta_cultos: true,
+    frequenta_cultos: 'frequentemente',
     estudo_biblico: 'Estudo sobre a Criação'
   },
   {
@@ -100,7 +100,7 @@ const mockInteressados: Interessado[] = [
     instrutor_biblico: 'Maria Costa',
     data_contato: '2024-05-15',
     observacoes: 'Decidido pelo batismo, aguardando resolver questões familiares',
-    frequenta_cultos: false,
+    frequenta_cultos: 'raramente',
     estudo_biblico: 'Estudo sobre o Batismo'
   }
 ];
