@@ -20,7 +20,7 @@ interface ImportarDadosProps {
 export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const { addInteressado } = useApp();
+  const { addInteressado, currentUser } = useApp();
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +44,15 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
       return;
     }
 
+    if (!currentUser) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsImporting(true);
 
     try {
@@ -59,13 +68,23 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
         try {
           const rowData = row as any;
           
-          // Mapear campos do Excel para o formato do sistema - sendo mais tolerante
+          // Usar a igreja do usuário logado como padrão
+          const igreja = rowData['Igreja'] || rowData['Cidade'] || currentUser.igreja;
+          
+          // Verificar se a igreja está na lista de igrejas válidas e se é a mesma do usuário
+          if (igreja !== currentUser.igreja) {
+            console.log('Registro ignorado - Igreja diferente do usuário:', rowData);
+            errors++;
+            continue;
+          }
+          
           const interessado: Interessado = {
             id: generateId(),
             nome_completo: capitalizeWords(rowData['Nome Completo'] || rowData['Nome'] || ''),
             telefone: formatPhone(rowData['Telefone'] || ''),
             endereco: rowData['Endereço'] || rowData['Endereco'] || '',
-            cidade: rowData['Igreja'] || rowData['Cidade'] || 'Armour', // Default para Armour se não especificado
+            cidade: igreja, // Usar a igreja como cidade
+            igreja: igreja, // Definir explicitamente a igreja
             status: (rowData['Status']?.toString().charAt(0) || 'E') as Interessado['status'],
             instrutor_biblico: rowData['Instrutor Bíblico'] || rowData['Instrutor'] || 'A definir',
             data_contato: rowData['Data do Contato'] || rowData['Data'] ? 
@@ -79,8 +98,8 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           };
 
           // Validar apenas campos mínimos essenciais: Nome e Igreja
-          if (interessado.nome_completo.trim() && interessado.cidade.trim()) {
-            addInteressado(interessado);
+          if (interessado.nome_completo.trim() && interessado.igreja) {
+            await addInteressado(interessado);
             imported++;
           } else {
             console.log('Registro ignorado - falta nome ou igreja:', rowData);
@@ -94,7 +113,7 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
 
       toast({
         title: "Importação Concluída",
-        description: `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros ignorados por falta de dados essenciais (nome e igreja).` : ''}`
+        description: `${imported} registros importados com sucesso para a igreja ${currentUser.igreja}. ${errors > 0 ? `${errors} registros ignorados.` : ''}`
       });
 
       onClose();
@@ -122,13 +141,16 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           <div className="text-sm text-gray-600">
             <p>Selecione um arquivo Excel (.xlsx) com os dados dos interessados.</p>
             <p className="mt-2">
-              <strong>Campos obrigatórios:</strong> Nome Completo e Igreja
+              <strong>Campos obrigatórios:</strong> Nome Completo
             </p>
             <p className="mt-1">
               <strong>Campos opcionais:</strong> Telefone, Endereço, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
             </p>
             <p className="mt-2 text-xs text-blue-600">
-              * Se um instrutor não for encontrado, você poderá completar o cadastro depois na lista.
+              * Os interessados serão cadastrados automaticamente para a igreja: <strong>{currentUser?.igreja}</strong>
+            </p>
+            <p className="mt-1 text-xs text-orange-600">
+              * Registros de outras igrejas serão ignorados.
             </p>
           </div>
           

@@ -128,7 +128,10 @@ export const fetchInteressados = async () => {
 export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
   const { data, error } = await supabase
     .from('interessados')
-    .insert(interessado)
+    .insert({
+      ...interessado,
+      igreja: interessado.cidade // Definir igreja igual à cidade
+    })
     .select()
     .single();
 
@@ -137,9 +140,15 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
 };
 
 export const updateInteressado = async (id: string, updates: Partial<Interessado>) => {
+  // Se a cidade for alterada, também alterar a igreja
+  const updateData = {
+    ...updates,
+    ...(updates.cidade && { igreja: updates.cidade })
+  };
+
   const { error } = await supabase
     .from('interessados')
-    .update(updates)
+    .update(updateData)
     .eq('id', id);
 
   if (error) throw error;

@@ -25,6 +25,7 @@ export interface Interessado {
   telefone: string;
   endereco?: string;
   cidade: string;
+  igreja?: string; // Nova propriedade opcional
   status: 'A' | 'B' | 'C' | 'D' | 'E';
   instrutor_biblico: string;
   data_contato: string;

@@ -56,6 +56,7 @@ export type Database = {
           estudo_biblico: string | null
           frequenta_cultos: string | null
           id: string
+          igreja: string
           instrutor_biblico: string
           nome_completo: string
           observacoes: string | null
@@ -71,6 +72,7 @@ export type Database = {
           estudo_biblico?: string | null
           frequenta_cultos?: string | null
           id?: string
+          igreja: string
           instrutor_biblico: string
           nome_completo: string
           observacoes?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           estudo_biblico?: string | null
           frequenta_cultos?: string | null
           id?: string
+          igreja?: string
           instrutor_biblico?: string
           nome_completo?: string
           observacoes?: string | null
