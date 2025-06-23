@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Usuario, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle } from 'lucide-react';
+import { capitalizeWords } from '../utils/textUtils';
 
 export default function CadastroMissionarios() {
   const { usuarios, addUsuario, deleteUsuario } = useApp();
@@ -22,6 +23,11 @@ export default function CadastroMissionarios() {
   });
 
   const login_acesso = formData.apelido ? `${formData.apelido}@escola-biblica.app` : '';
+
+  const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const capitalizedName = capitalizeWords(e.target.value);
+    setFormData({ ...formData, nome_completo: capitalizedName });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +127,7 @@ export default function CadastroMissionarios() {
                 <Input
                   id="nome_completo"
                   value={formData.nome_completo}
-                  onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                  onChange={handleNomeChange}
                   placeholder="Digite o nome completo"
                   required
                 />

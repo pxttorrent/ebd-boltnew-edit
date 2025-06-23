@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Usuario, IgrejaOptions } from '../types';
+import { capitalizeWords } from '../utils/textUtils';
 
 interface CadastroMissionarioPublicoProps {
   onVoltar: () => void;
@@ -22,6 +23,11 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
   });
   const [cadastroRealizado, setCadastroRealizado] = useState(false);
   const { addUsuario } = useApp();
+
+  const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const capitalizedName = capitalizeWords(e.target.value);
+    setFormData(prev => ({ ...prev, nome_completo: capitalizedName }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +98,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
               <Input
                 id="nome_completo"
                 value={formData.nome_completo}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome_completo: e.target.value }))}
+                onChange={handleNomeChange}
                 placeholder="Digite seu nome completo"
                 required
               />

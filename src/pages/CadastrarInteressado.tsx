@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Interessado, StatusLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
+import { capitalizeWords } from '../utils/textUtils';
 
 export default function CadastrarInteressado() {
   const { usuarios, addInteressado } = useApp();
@@ -23,6 +23,11 @@ export default function CadastrarInteressado() {
     data_contato: '',
     observacoes: ''
   });
+
+  const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const capitalizedName = capitalizeWords(e.target.value);
+    setFormData({ ...formData, nome_completo: capitalizedName });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +84,7 @@ export default function CadastrarInteressado() {
                 <Input
                   id="nome_completo"
                   value={formData.nome_completo}
-                  onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                  onChange={handleNomeChange}
                   placeholder="Digite o nome completo"
                   required
                 />
