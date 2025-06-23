@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ArrowLeft, CheckCircle, Camera, Upload, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Usuario, IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface CadastroMissionarioPublicoProps {
   onVoltar: () => void;
@@ -18,14 +21,91 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
     nome_completo: '',
     apelido: '',
     senha: '',
-    igreja: '' as any
+    igreja: '' as any,
+    foto_perfil: ''
   });
   const [cadastroRealizado, setCadastroRealizado] = useState(false);
   const { addUsuario } = useApp();
+  const { toast } = useToast();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
     setFormData(prev => ({ ...prev, nome_completo: capitalizedName }));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          title: "Erro",
+          description: "A foto deve ter no máximo 2MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({ ...prev, foto_perfil: event.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 300, height: 300 } 
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setIsCapturing(true);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível acessar a câmera.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const photoData = canvas.toDataURL('image/jpeg', 0.8);
+        setFormData(prev => ({ ...prev, foto_perfil: photoData }));
+        stopCamera();
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCapturing(false);
+  };
+
+  const removeFoto = () => {
+    setFormData(prev => ({ ...prev, foto_perfil: '' }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,6 +119,7 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
       senha: formData.senha,
       igreja: formData.igreja,
       aprovado: false, // Aguarda aprovação
+      foto_perfil: formData.foto_perfil,
       permissoes: {
         pode_cadastrar: false,
         pode_editar: false,
@@ -92,6 +173,77 @@ const CadastroMissionarioPublico = ({ onVoltar }: CadastroMissionarioPublicoProp
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Foto de Perfil */}
+            <div className="space-y-3 border-b border-gray-200 pb-4">
+              <Label className="text-base font-semibold text-gray-700">Foto de Perfil (Opcional)</Label>
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="w-24 h-24 border-2 border-gray-200">
+                  <AvatarImage src={formData.foto_perfil} />
+                  <AvatarFallback className="text-lg bg-gray-100">
+                    {formData.nome_completo ? formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase() : 'Foto'}
+                  </AvatarFallback>
+                </Avatar>
+
+                {isCapturing ? (
+                  <div className="space-y-3">
+                    <video ref={videoRef} autoPlay className="w-48 h-36 border rounded-lg" />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <div className="flex gap-2 justify-center">
+                      <Button type="button" onClick={capturePhoto} size="sm">
+                        Capturar Foto
+                      </Button>
+                      <Button type="button" onClick={stopCamera} variant="outline" size="sm">
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <Button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()} 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Escolher da Galeria
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={startCamera} 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Tirar Foto
+                    </Button>
+                    {formData.foto_perfil && (
+                      <Button 
+                        type="button" 
+                        onClick={removeFoto} 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <X className="w-4 h-4" />
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="nome_completo">Nome Completo</Label>
               <Input
