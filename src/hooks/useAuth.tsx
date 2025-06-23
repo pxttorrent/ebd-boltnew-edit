@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: 'Sua conta ainda não foi aprovada pelo administrador' };
       }
 
-      // For now, we'll use a simple comparison (in production, use proper password hashing)
-      if (senha !== 'password') { // Temporary - will implement proper auth later
+      // Check password (direct comparison for now - in production use proper hashing)
+      if (senha !== usuario.senha) {
         return { error: 'Senha incorreta' };
       }
 
