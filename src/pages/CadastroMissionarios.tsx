@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle, Camera, Upload, X } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import EditarMissionario from '../components/EditarMissionario';
+import FotoCropper from '../components/FotoCropper';
 
 export default function CadastroMissionarios() {
   const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useApp();
@@ -31,6 +32,8 @@ export default function CadastroMissionarios() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [tempImageSrc, setTempImageSrc] = useState('');
 
   const login_acesso = formData.apelido ? `${formData.apelido}@escola-biblica.app` : '';
 
@@ -42,10 +45,10 @@ export default function CadastroMissionarios() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
           title: "Erro",
-          description: "A foto deve ter no máximo 2MB.",
+          description: "A foto deve ter no máximo 5MB.",
           variant: "destructive"
         });
         return;
@@ -53,7 +56,9 @@ export default function CadastroMissionarios() {
 
       const reader = new FileReader();
       reader.onload = (event) => {
-        setFormData(prev => ({ ...prev, foto_perfil: event.target?.result as string }));
+        const imageSrc = event.target?.result as string;
+        setTempImageSrc(imageSrc);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
@@ -62,17 +67,23 @@ export default function CadastroMissionarios() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 300, height: 300 } 
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        } 
       });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play();
       }
       setIsCapturing(true);
     } catch (error) {
+      console.error('Camera error:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível acessar a câmera.",
+        description: "Não foi possível acessar a câmera. Verifique as permissões.",
         variant: "destructive"
       });
     }
@@ -90,7 +101,8 @@ export default function CadastroMissionarios() {
       if (ctx) {
         ctx.drawImage(video, 0, 0);
         const photoData = canvas.toDataURL('image/jpeg', 0.8);
-        setFormData(prev => ({ ...prev, foto_perfil: photoData }));
+        setTempImageSrc(photoData);
+        setCropperOpen(true);
         stopCamera();
       }
     }
@@ -102,6 +114,12 @@ export default function CadastroMissionarios() {
       setStream(null);
     }
     setIsCapturing(false);
+  };
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    setFormData(prev => ({ ...prev, foto_perfil: croppedImageUrl }));
+    setCropperOpen(false);
+    setTempImageSrc('');
   };
 
   const removeFoto = () => {
@@ -205,7 +223,7 @@ export default function CadastroMissionarios() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Foto de Perfil - Moved to the top and made more prominent */}
+              {/* Foto de Perfil */}
               <div className="space-y-3 border-b border-gray-200 pb-4">
                 <Label className="text-base font-semibold text-gray-700">Foto de Perfil (Opcional)</Label>
                 <div className="flex flex-col items-center gap-4">
@@ -218,7 +236,7 @@ export default function CadastroMissionarios() {
 
                   {isCapturing ? (
                     <div className="space-y-3">
-                      <video ref={videoRef} autoPlay className="w-48 h-36 border rounded-lg" />
+                      <video ref={videoRef} autoPlay playsInline className="w-48 h-36 border rounded-lg" />
                       <canvas ref={canvasRef} className="hidden" />
                       <div className="flex gap-2 justify-center">
                         <Button type="button" onClick={capturePhoto} size="sm">
@@ -425,6 +443,16 @@ export default function CadastroMissionarios() {
             onSave={updateUsuario}
           />
         )}
+
+        <FotoCropper
+          isOpen={cropperOpen}
+          onClose={() => {
+            setCropperOpen(false);
+            setTempImageSrc('');
+          }}
+          imageSrc={tempImageSrc}
+          onCropComplete={handleCropComplete}
+        />
       </div>
     </div>
   );
