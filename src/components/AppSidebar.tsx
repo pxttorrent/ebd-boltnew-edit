@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -25,7 +26,7 @@ const menuItems = [
     icon: Home,
   },
   {
-    title: 'Cadastrar Interessado',
+    title: 'Cadastrar Interessados',
     url: '/cadastrar-interessado',
     icon: UserPlus,
   },
