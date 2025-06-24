@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +15,7 @@ interface AppContextType {
 
   // Interessado management
   interessados: Interessado[];
-  addInteressado: (interessado: Interessado) => Promise<void>;
+  addInteressado: (interessado: Omit<Interessado, 'id'>) => Promise<void>;
   updateInteressado: (id: string, updates: Partial<Interessado>) => Promise<void>;
   deleteInteressado: (id: string) => Promise<void>;
 
@@ -166,7 +165,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Interessado operations
-  const addInteressado = async (interessado: Interessado) => {
+  const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
     try {
       const newInteressado = await db.addInteressado(interessado);
       setInteressados(prev => [...prev, { ...interessado, id: newInteressado.id }]);

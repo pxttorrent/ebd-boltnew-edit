@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -50,15 +49,15 @@ export default function CadastrarInteressado() {
       return;
     }
 
-    const novoInteressado: Interessado = {
-      id: Date.now().toString(),
+    // Não definir ID aqui - deixar o Supabase gerar automaticamente
+    const novoInteressado: Omit<Interessado, 'id'> = {
       ...formData,
       status: formData.status as Interessado['status'] || 'E',
       instrutor_biblico: formData.instrutor_biblico || 'A definir',
       frequenta_cultos: formData.frequenta_cultos
     };
 
-    addInteressado(novoInteressado);
+    addInteressado(novoInteressado as Interessado);
     
     toast({
       title: "Sucesso!",
