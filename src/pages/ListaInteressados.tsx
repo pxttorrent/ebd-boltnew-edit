@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Interessado } from '../types';
+import { Interessado, StatusLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
 import ColumnSelector, { ColumnOption } from '../components/ColumnSelector';
