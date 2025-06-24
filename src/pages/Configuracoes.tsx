@@ -12,16 +12,18 @@ import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User } from 'lucide-re
 import EditarMissionario from '../components/EditarMissionario';
 
 export default function Configuracoes() {
-  const { usuarios, updateUsuario, deleteUsuario } = useApp();
+  const { usuarios, updateUsuario, deleteUsuario, currentUser } = useApp();
   const { toast } = useToast();
   const [localUsuarios, setLocalUsuarios] = useState<Usuario[]>([]);
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Sincronizar com o contexto sempre que usuarios mudar
   useEffect(() => {
     console.log('Configurações - Usuários recebidos do contexto:', usuarios.length);
     usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ') - Aprovado:', u.aprovado, '- Tipo:', u.tipo));
     setLocalUsuarios([...usuarios]); // Criar uma nova cópia para garantir re-render
+    setHasChanges(false); // Reset changes when data reloads
   }, [usuarios]);
 
   const handlePermissionChange = (userId: string, permission: keyof Usuario['permissoes'], value: boolean) => {
@@ -35,69 +37,129 @@ export default function Configuracoes() {
           : usuario
       )
     );
+    setHasChanges(true);
   };
 
-  const handleTipoChange = (userId: string, tipo: Usuario['tipo']) => {
-    const updatedUsuarios = localUsuarios.map(usuario => 
-      usuario.id === userId 
-        ? { ...usuario, tipo }
-        : usuario
-    );
-    setLocalUsuarios(updatedUsuarios);
-    
-    // Aplicar a mudança imediatamente no contexto
-    updateUsuario(userId, { tipo });
-    
-    toast({
-      title: "Tipo Atualizado!",
-      description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} agora é ${TipoUsuarioLabels[tipo]}.`
-    });
-  };
-
-  const handleApprovalChange = (userId: string, approved: boolean) => {
-    const updatedUsuarios = localUsuarios.map(usuario => 
-      usuario.id === userId 
-        ? { ...usuario, aprovado: approved }
-        : usuario
-    );
-    setLocalUsuarios(updatedUsuarios);
-    
-    // Aplicar a mudança imediatamente no contexto
-    updateUsuario(userId, { aprovado: approved });
-    
-    toast({
-      title: approved ? "Usuário Aprovado!" : "Usuário Desaprovado!",
-      description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} ${approved ? 'foi aprovado e agora pode acessar o sistema' : 'foi desaprovado'}.`
-    });
-  };
-
-  const handleSaveChanges = () => {
-    // Salvar todas as mudanças de permissões
-    localUsuarios.forEach(usuario => {
-      updateUsuario(usuario.id, {
-        permissoes: usuario.permissoes,
-        aprovado: usuario.aprovado,
-        tipo: usuario.tipo
+  const handleTipoChange = async (userId: string, tipo: Usuario['tipo']) => {
+    try {
+      // Update immediately in context
+      await updateUsuario(userId, { tipo });
+      
+      // Update local state
+      setLocalUsuarios(prev => 
+        prev.map(usuario => 
+          usuario.id === userId 
+            ? { ...usuario, tipo }
+            : usuario
+        )
+      );
+      
+      toast({
+        title: "Tipo Atualizado!",
+        description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} agora é ${TipoUsuarioLabels[tipo]}.`
       });
-    });
-    
-    toast({
-      title: "Sucesso!",
-      description: "Todas as configurações foram atualizadas com sucesso."
-    });
+    } catch (error) {
+      console.error('Erro ao atualizar tipo:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar tipo do usuário.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleApprovalChange = async (userId: string, approved: boolean) => {
+    try {
+      // Update immediately in context
+      await updateUsuario(userId, { aprovado: approved });
+      
+      // Update local state
+      setLocalUsuarios(prev => 
+        prev.map(usuario => 
+          usuario.id === userId 
+            ? { ...usuario, aprovado: approved }
+            : usuario
+        )
+      );
+      
+      toast({
+        title: approved ? "Usuário Aprovado!" : "Usuário Desaprovado!",
+        description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} ${approved ? 'foi aprovado e agora pode acessar o sistema' : 'foi desaprovado'}.`
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar aprovação:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar aprovação do usuário.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    if (!hasChanges) {
+      toast({
+        title: "Informação",
+        description: "Não há alterações para salvar."
+      });
+      return;
+    }
+
+    try {
+      // Save all permission changes
+      const promises = localUsuarios.map(usuario => {
+        const originalUsuario = usuarios.find(u => u.id === usuario.id);
+        if (originalUsuario) {
+          // Compare permissions to see if they changed
+          const permissionsChanged = JSON.stringify(originalUsuario.permissoes) !== JSON.stringify(usuario.permissoes);
+          
+          if (permissionsChanged) {
+            console.log('Salvando permissões para:', usuario.nome_completo, usuario.permissoes);
+            return updateUsuario(usuario.id, {
+              permissoes: usuario.permissoes
+            });
+          }
+        }
+        return Promise.resolve();
+      });
+
+      await Promise.all(promises);
+      setHasChanges(false);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Todas as permissões foram atualizadas com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Erro ao salvar permissões:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar as configurações.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleEdit = (usuario: Usuario) => {
     setEditingUsuario(usuario);
   };
 
-  const handleDelete = (id: string, nome: string) => {
+  const handleDelete = async (id: string, nome: string) => {
     if (window.confirm(`Tem certeza que deseja excluir ${nome}?`)) {
-      deleteUsuario(id);
-      toast({
-        title: "Sucesso!",
-        description: "Usuário excluído com sucesso."
-      });
+      try {
+        await deleteUsuario(id);
+        toast({
+          title: "Sucesso!",
+          description: "Usuário excluído com sucesso."
+        });
+      } catch (error: any) {
+        console.error('Erro ao excluir usuário:', error);
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao excluir usuário.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -107,6 +169,23 @@ export default function Configuracoes() {
     pode_excluir: 'Pode Excluir',
     pode_exportar: 'Pode Exportar'
   };
+
+  // Check if current user is admin
+  const isAdmin = currentUser?.tipo === 'administrador';
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
+            <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
+            <p className="text-sm text-gray-500 mt-2">Apenas administradores podem gerenciar configurações.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Separar usuários aprovados e pendentes
   const usuariosPendentes = localUsuarios.filter(u => !u.aprovado);
@@ -131,12 +210,23 @@ export default function Configuracoes() {
               </div>
               <Button 
                 onClick={handleSaveChanges}
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center gap-2"
+                disabled={!hasChanges}
+                className={`${hasChanges 
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' 
+                  : 'bg-gray-400'
+                } text-white flex items-center gap-2`}
               >
                 <Save className="w-4 h-4" />
-                Salvar Alterações
+                {hasChanges ? 'Salvar Alterações' : 'Sem Alterações'}
               </Button>
             </div>
+            {hasChanges && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm">
+                  ⚠️ Você tem alterações não salvas. Clique em "Salvar Alterações" para persistir as mudanças.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Usuários Pendentes */}
