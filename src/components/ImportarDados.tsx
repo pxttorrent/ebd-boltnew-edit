@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -71,11 +70,17 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           // Usar a igreja do usuário logado como padrão
           const igreja = rowData['Igreja'] || rowData['Cidade'] || currentUser.igreja;
           
-          // Verificar se a igreja está na lista de igrejas válidas e se é a mesma do usuário
-          if (igreja !== currentUser.igreja) {
-            console.log('Registro ignorado - Igreja diferente do usuário:', rowData);
-            errors++;
-            continue;
+          // Verificar permissões baseadas no tipo de usuário
+          if (currentUser.tipo === 'administrador') {
+            // Administradores podem importar de qualquer igreja
+            console.log('Administrador importando para igreja:', igreja);
+          } else {
+            // Missionários só podem importar para sua própria igreja
+            if (igreja !== currentUser.igreja) {
+              console.log('Registro ignorado - Igreja diferente do usuário missionário:', rowData);
+              errors++;
+              continue;
+            }
           }
           
           const interessado: Interessado = {
@@ -111,9 +116,13 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
         }
       }
 
+      const messageDescription = currentUser.tipo === 'administrador' 
+        ? `${imported} registros importados com sucesso. ${errors > 0 ? `${errors} registros ignorados.` : ''}`
+        : `${imported} registros importados com sucesso para a igreja ${currentUser.igreja}. ${errors > 0 ? `${errors} registros ignorados.` : ''}`;
+
       toast({
         title: "Importação Concluída",
-        description: `${imported} registros importados com sucesso para a igreja ${currentUser.igreja}. ${errors > 0 ? `${errors} registros ignorados.` : ''}`
+        description: messageDescription
       });
 
       onClose();
@@ -146,12 +155,20 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
             <p className="mt-1">
               <strong>Campos opcionais:</strong> Telefone, Endereço, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
             </p>
-            <p className="mt-2 text-xs text-blue-600">
-              * Os interessados serão cadastrados automaticamente para a igreja: <strong>{currentUser?.igreja}</strong>
-            </p>
-            <p className="mt-1 text-xs text-orange-600">
-              * Registros de outras igrejas serão ignorados.
-            </p>
+            {currentUser?.tipo === 'administrador' ? (
+              <p className="mt-2 text-xs text-green-600">
+                * Como administrador, você pode importar interessados de qualquer igreja.
+              </p>
+            ) : (
+              <>
+                <p className="mt-2 text-xs text-blue-600">
+                  * Os interessados serão cadastrados automaticamente para a igreja: <strong>{currentUser?.igreja}</strong>
+                </p>
+                <p className="mt-1 text-xs text-orange-600">
+                  * Registros de outras igrejas serão ignorados.
+                </p>
+              </>
+            )}
           </div>
           
           <div>
