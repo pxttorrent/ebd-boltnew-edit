@@ -126,22 +126,79 @@ export const fetchInteressados = async () => {
 };
 
 export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
-  // Garantir que igreja está definida - usar cidade se igreja não estiver definida
-  const interessadoComIgreja = {
-    ...interessado,
-    igreja: interessado.igreja || interessado.cidade
+  console.log('Tentando adicionar interessado:', interessado);
+  
+  // Verificar autenticação
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error('Usuário não autenticado:', authError);
+    throw new Error('Usuário não autenticado');
+  }
+
+  console.log('Usuário autenticado:', user.id);
+
+  // Verificar se o usuário atual tem permissão
+  const { data: usuarioAtual, error: userError } = await supabase
+    .from('usuarios')
+    .select(`
+      *,
+      usuario_permissoes(*)
+    `)
+    .eq('id', user.id)
+    .single();
+
+  if (userError) {
+    console.error('Erro ao buscar usuário atual:', userError);
+    throw new Error('Erro ao verificar permissões do usuário');
+  }
+
+  if (!usuarioAtual?.aprovado) {
+    throw new Error('Usuário não aprovado para realizar esta operação');
+  }
+
+  const permissoes = usuarioAtual.usuario_permissoes[0];
+  if (!permissoes?.pode_cadastrar) {
+    throw new Error('Usuário não tem permissão para cadastrar interessados');
+  }
+
+  // Verificar se a igreja do interessado corresponde à igreja do usuário
+  if (interessado.igreja !== usuarioAtual.igreja) {
+    console.error('Igreja do interessado não corresponde à do usuário:', {
+      interessadoIgreja: interessado.igreja,
+      usuarioIgreja: usuarioAtual.igreja
+    });
+    throw new Error('Você só pode cadastrar interessados da sua igreja');
+  }
+
+  // Garantir que todos os campos obrigatórios estão preenchidos
+  const interessadoCompleto = {
+    nome_completo: interessado.nome_completo,
+    telefone: interessado.telefone || '',
+    endereco: interessado.endereco || '',
+    cidade: interessado.cidade,
+    igreja: interessado.igreja,
+    status: interessado.status || 'E',
+    instrutor_biblico: interessado.instrutor_biblico || 'A definir',
+    data_contato: interessado.data_contato || new Date().toISOString().split('T')[0],
+    observacoes: interessado.observacoes || '',
+    frequenta_cultos: interessado.frequenta_cultos || null,
+    estudo_biblico: interessado.estudo_biblico || ''
   };
+
+  console.log('Dados completos para inserção:', interessadoCompleto);
 
   const { data, error } = await supabase
     .from('interessados')
-    .insert(interessadoComIgreja)
+    .insert(interessadoCompleto)
     .select()
     .single();
 
   if (error) {
-    console.error('Error adding interessado:', error);
+    console.error('Erro ao inserir interessado:', error);
     throw error;
   }
+
+  console.log('Interessado criado com sucesso:', data);
   return data;
 };
 

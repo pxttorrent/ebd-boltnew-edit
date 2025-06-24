@@ -12,7 +12,7 @@ import { capitalizeWords } from '../utils/textUtils';
 import { formatPhone } from '../utils/phoneUtils';
 
 export default function CadastrarInteressado() {
-  const { usuarios, addInteressado } = useApp();
+  const { usuarios, addInteressado, currentUser } = useApp();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -20,13 +20,15 @@ export default function CadastrarInteressado() {
     telefone: '',
     endereco: '',
     cidade: '',
-    status: '' as Interessado['status'] | '',
+    status: 'E' as Interessado['status'],
     instrutor_biblico: '',
     data_contato: '',
     observacoes: '',
-    frequenta_cultos: undefined as string | undefined,
+    frequenta_cultos: '',
     estudo_biblico: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
@@ -38,9 +40,11 @@ export default function CadastrarInteressado() {
     setFormData({ ...formData, telefone: formattedPhone });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmitting) return;
+
     if (!formData.nome_completo || !formData.cidade) {
       toast({
         title: "Erro",
@@ -50,35 +54,64 @@ export default function CadastrarInteressado() {
       return;
     }
 
-    // Criar interessado com igreja definida igual à cidade
-    const novoInteressado: Omit<Interessado, 'id'> = {
-      ...formData,
-      igreja: formData.cidade, // Definir igreja igual à cidade para RLS
-      status: formData.status as Interessado['status'] || 'E',
-      instrutor_biblico: formData.instrutor_biblico || 'A definir',
-      frequenta_cultos: formData.frequenta_cultos
-    };
+    if (!currentUser) {
+      toast({
+        title: "Erro",
+        description: "Usuário não encontrado. Faça login novamente.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    addInteressado(novoInteressado);
-    
-    toast({
-      title: "Sucesso!",
-      description: "Interessado cadastrado com sucesso."
-    });
+    setIsSubmitting(true);
 
-    // Reset form
-    setFormData({
-      nome_completo: '',
-      telefone: '',
-      endereco: '',
-      cidade: '',
-      status: '' as Interessado['status'] | '',
-      instrutor_biblico: '',
-      data_contato: '',
-      observacoes: '',
-      frequenta_cultos: undefined,
-      estudo_biblico: ''
-    });
+    try {
+      // Criar interessado com igreja definida igual à cidade
+      const novoInteressado: Omit<Interessado, 'id'> = {
+        nome_completo: formData.nome_completo,
+        telefone: formData.telefone,
+        endereco: formData.endereco,
+        cidade: formData.cidade,
+        igreja: formData.cidade, // Definir igreja igual à cidade para RLS
+        status: formData.status,
+        instrutor_biblico: formData.instrutor_biblico || 'A definir',
+        data_contato: formData.data_contato || new Date().toISOString().split('T')[0],
+        observacoes: formData.observacoes,
+        frequenta_cultos: formData.frequenta_cultos || undefined,
+        estudo_biblico: formData.estudo_biblico
+      };
+
+      await addInteressado(novoInteressado);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Interessado cadastrado com sucesso."
+      });
+
+      // Reset form
+      setFormData({
+        nome_completo: '',
+        telefone: '',
+        endereco: '',
+        cidade: '',
+        status: 'E' as Interessado['status'],
+        instrutor_biblico: '',
+        data_contato: '',
+        observacoes: '',
+        frequenta_cultos: '',
+        estudo_biblico: ''
+      });
+
+    } catch (error: any) {
+      console.error('Erro ao cadastrar interessado:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao cadastrar interessado",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -178,6 +211,7 @@ export default function CadastrarInteressado() {
                     <SelectValue placeholder="Selecione o instrutor" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="A definir">A definir</SelectItem>
                     {usuarios.map((usuario) => (
                       <SelectItem key={usuario.id} value={usuario.nome_completo}>
                         {usuario.nome_completo}
@@ -250,9 +284,10 @@ export default function CadastrarInteressado() {
 
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 rounded-lg"
             >
-              Cadastrar Interessado
+              {isSubmitting ? 'Cadastrando...' : 'Cadastrar Interessado'}
             </Button>
           </form>
         </div>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
@@ -61,12 +62,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }));
       setUsuarios(typedUsuarios);
       
-      // Find current user by matching auth user metadata
-      const currentUserData = typedUsuarios.find(u => 
-        user?.user_metadata?.apelido === u.apelido ||
-        user?.email === u.login_acesso
-      );
+      // Find current user by matching auth user ID
+      const currentUserData = typedUsuarios.find(u => u.id === user?.id);
       setCurrentUser(currentUserData || null);
+
+      if (currentUserData) {
+        console.log('Usuário atual encontrado:', currentUserData);
+      } else {
+        console.warn('Usuário atual não encontrado nos dados do banco');
+      }
 
       // Load interessados
       const interessadosData = await db.fetchInteressados();
@@ -167,20 +171,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Interessado operations
   const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
     try {
+      console.log('Context: Adicionando interessado:', interessado);
       const newInteressado = await db.addInteressado(interessado);
-      setInteressados(prev => [...prev, { ...interessado, id: newInteressado.id }]);
+      console.log('Context: Interessado adicionado:', newInteressado);
+      
+      setInteressados(prev => [...prev, newInteressado]);
       
       toast({
         title: "Sucesso!",
         description: "Interessado adicionado com sucesso."
       });
     } catch (error: any) {
-      console.error('Error adding interessado:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao adicionar interessado",
-        variant: "destructive"
-      });
+      console.error('Context: Error adding interessado:', error);
+      // Re-throw the error so the component can handle it
       throw error;
     }
   };
