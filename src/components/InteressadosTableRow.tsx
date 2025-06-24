@@ -37,7 +37,7 @@ export default function InteressadosTableRow({
       <TableCell>{interessado.cidade}</TableCell>
       <TableCell>
         <div 
-          className="cursor-pointer"
+          className="cursor-pointer rounded-md p-1 transition-colors hover:bg-gray-100"
           onClick={() => onStatusClick(interessado, 'status')}
           title="Clique para editar"
         >
