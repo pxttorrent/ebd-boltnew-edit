@@ -45,10 +45,11 @@ export default function CadastrarInteressado() {
     
     if (isSubmitting) return;
 
-    if (!formData.nome_completo || !formData.cidade) {
+    // Validar apenas campos obrigatórios: Nome completo e Igreja
+    if (!formData.nome_completo.trim() || !formData.cidade) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios (Nome e Igreja).",
+        description: "Por favor, preencha os campos obrigatórios: Nome Completo e Igreja.",
         variant: "destructive"
       });
       return;
@@ -72,7 +73,7 @@ export default function CadastrarInteressado() {
         telefone: formData.telefone,
         endereco: formData.endereco,
         cidade: formData.cidade,
-        igreja: formData.cidade, // Definir igreja igual à cidade para RLS
+        igreja: formData.cidade,
         status: formData.status,
         instrutor_biblico: formData.instrutor_biblico || 'A definir',
         data_contato: formData.data_contato || new Date().toISOString().split('T')[0],

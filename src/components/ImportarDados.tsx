@@ -83,8 +83,8 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
             nome_completo: capitalizeWords(rowData['Nome Completo'] || rowData['Nome'] || ''),
             telefone: formatPhone(rowData['Telefone'] || ''),
             endereco: rowData['Endereço'] || rowData['Endereco'] || '',
-            cidade: igreja, // Usar a igreja como cidade
-            igreja: igreja, // Definir explicitamente a igreja
+            cidade: igreja,
+            igreja: igreja,
             status: (rowData['Status']?.toString().charAt(0) || 'E') as Interessado['status'],
             instrutor_biblico: rowData['Instrutor Bíblico'] || rowData['Instrutor'] || 'A definir',
             data_contato: rowData['Data do Contato'] || rowData['Data'] ? 
@@ -97,12 +97,12 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
             observacoes: rowData['Observações'] || rowData['Observacoes'] || ''
           };
 
-          // Validar apenas campos mínimos essenciais: Nome e Igreja
+          // Validar apenas campos obrigatórios: Nome completo e Igreja
           if (interessado.nome_completo.trim() && interessado.igreja) {
             await addInteressado(interessado);
             imported++;
           } else {
-            console.log('Registro ignorado - falta nome ou igreja:', rowData);
+            console.log('Registro ignorado - falta nome completo ou igreja:', rowData);
             errors++;
           }
         } catch (error) {
@@ -141,7 +141,7 @@ export default function ImportarDados({ isOpen, onClose }: ImportarDadosProps) {
           <div className="text-sm text-gray-600">
             <p>Selecione um arquivo Excel (.xlsx) com os dados dos interessados.</p>
             <p className="mt-2">
-              <strong>Campos obrigatórios:</strong> Nome Completo
+              <strong>Campos obrigatórios:</strong> Nome Completo e Igreja
             </p>
             <p className="mt-1">
               <strong>Campos opcionais:</strong> Telefone, Endereço, Status, Instrutor Bíblico, Data do Contato, Participação em Eventos, Estudo Bíblico, Observações
