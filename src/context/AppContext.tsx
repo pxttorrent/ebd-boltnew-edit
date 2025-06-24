@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
@@ -172,10 +171,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
     try {
       console.log('Context: Adicionando interessado:', interessado);
-      const newInteressado = await db.addInteressado(interessado);
-      console.log('Context: Interessado adicionado:', newInteressado);
+      const newInteressadoData = await db.addInteressado(interessado);
+      console.log('Context: Interessado adicionado:', newInteressadoData);
       
-      setInteressados(prev => [...prev, newInteressado]);
+      // Transform the returned data to match our Interessado type
+      const typedNewInteressado: Interessado = {
+        ...newInteressadoData,
+        status: newInteressadoData.status as Interessado['status']
+      };
+      
+      setInteressados(prev => [...prev, typedNewInteressado]);
       
       toast({
         title: "Sucesso!",
