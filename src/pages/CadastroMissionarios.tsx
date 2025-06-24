@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Usuario, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Trash, AlertCircle, Upload, X } from 'lucide-react';
+import { Edit, Trash, AlertCircle, Upload, X, Shield, User } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { hashPassword } from '../utils/passwordUtils';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ export default function CadastroMissionarios() {
     senha: '',
     email_pessoal: '',
     igreja: '' as Usuario['igreja'] | '',
+    tipo: 'missionario' as Usuario['tipo'],
     foto_perfil: ''
   });
 
@@ -77,7 +79,7 @@ export default function CadastroMissionarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.email_pessoal || !formData.igreja) {
+    if (!formData.nome_completo || !formData.apelido || !formData.senha || !formData.email_pessoal || !formData.igreja || !formData.tipo) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -110,7 +112,7 @@ export default function CadastroMissionarios() {
     setLoading(true);
 
     try {
-      console.log('Iniciando cadastro de missionário...', { apelido: formData.apelido, igreja: formData.igreja });
+      console.log('Iniciando cadastro de missionário...', { apelido: formData.apelido, igreja: formData.igreja, tipo: formData.tipo });
       
       // Hash password before storing
       const hashedPassword = await hashPassword(formData.senha);
@@ -126,6 +128,7 @@ export default function CadastroMissionarios() {
           senha: hashedPassword,
           email_pessoal: formData.email_pessoal,
           igreja: formData.igreja,
+          tipo: formData.tipo,
           foto_perfil: formData.foto_perfil || null,
           aprovado: true // Admin is creating, so auto-approve
         })
@@ -146,7 +149,7 @@ export default function CadastroMissionarios() {
           usuario_id: usuario.id,
           pode_cadastrar: true,
           pode_editar: true,
-          pode_excluir: false,
+          pode_excluir: formData.tipo === 'administrador', // Only admins can delete by default
           pode_exportar: true
         });
 
@@ -167,7 +170,7 @@ export default function CadastroMissionarios() {
       
       toast({
         title: "Sucesso!",
-        description: `Missionário ${formData.nome_completo} cadastrado com sucesso.`
+        description: `${formData.tipo === 'administrador' ? 'Administrador' : 'Missionário'} ${formData.nome_completo} cadastrado com sucesso.`
       });
 
       // Reset form
@@ -177,6 +180,7 @@ export default function CadastroMissionarios() {
         senha: '',
         email_pessoal: '',
         igreja: '' as Usuario['igreja'] | '',
+        tipo: 'missionario' as Usuario['tipo'],
         foto_perfil: ''
       });
 
@@ -184,7 +188,7 @@ export default function CadastroMissionarios() {
       console.error('Erro durante o cadastro:', error);
       toast({
         title: "Erro no Cadastro",
-        description: error.message || "Erro inesperado ao cadastrar missionário. Tente novamente.",
+        description: error.message || "Erro inesperado ao cadastrar usuário. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -201,7 +205,7 @@ export default function CadastroMissionarios() {
       deleteUsuario(id);
       toast({
         title: "Sucesso!",
-        description: "Missionário excluído com sucesso."
+        description: "Usuário excluído com sucesso."
       });
     }
   };
@@ -210,13 +214,13 @@ export default function CadastroMissionarios() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-          Cadastro de Missionários
+          Cadastro de Usuários
         </h1>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Form Section */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Cadastrar Novo Missionário</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Cadastrar Novo Usuário</h2>
             
             {/* Alert Card */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -226,7 +230,7 @@ export default function CadastroMissionarios() {
                   <p className="font-medium mb-2">Instruções para o Administrador:</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Preencha e salve os dados no formulário abaixo</li>
-                    <li>O missionário será cadastrado e aprovado automaticamente</li>
+                    <li>O usuário será cadastrado e aprovado automaticamente</li>
                     <li>Use o "Login de Acesso" gerado para informar ao usuário suas credenciais</li>
                   </ol>
                 </div>
@@ -358,6 +362,38 @@ export default function CadastroMissionarios() {
               </div>
 
               <div>
+                <Label htmlFor="tipo" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Tipo de Usuário *
+                </Label>
+                <Select 
+                  value={formData.tipo} 
+                  onValueChange={(value) => setFormData({ ...formData, tipo: value as Usuario['tipo'] })}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="missionario">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Missionário
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="administrador">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Administrador
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Administradores podem ver dados de todas as igrejas
+                </p>
+              </div>
+
+              <div>
                 <Label htmlFor="igreja" className="text-sm font-medium text-gray-700 mb-2 block">
                   Igreja *
                 </Label>
@@ -384,18 +420,18 @@ export default function CadastroMissionarios() {
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-3 rounded-lg"
                 disabled={loading}
               >
-                {loading ? 'Cadastrando...' : 'Cadastrar Missionário'}
+                {loading ? 'Cadastrando...' : 'Cadastrar Usuário'}
               </Button>
             </form>
           </div>
 
           {/* Table Section */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Missionários Cadastrados</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Usuários Cadastrados</h2>
             
             {usuarios.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">Nenhum missionário cadastrado ainda.</p>
+                <p className="text-gray-500">Nenhum usuário cadastrado ainda.</p>
               </div>
             ) : (
               <Table>
@@ -403,6 +439,7 @@ export default function CadastroMissionarios() {
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold text-gray-700">Foto</TableHead>
                     <TableHead className="font-semibold text-gray-700">Nome</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Tipo</TableHead>
                     <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
                     <TableHead className="font-semibold text-gray-700">Login</TableHead>
                     <TableHead className="font-semibold text-gray-700">Ações</TableHead>
@@ -420,6 +457,21 @@ export default function CadastroMissionarios() {
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">{usuario.nome_completo}</TableCell>
+                      <TableCell>
+                        <Badge className={usuario.tipo === 'administrador' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}>
+                          {usuario.tipo === 'administrador' ? (
+                            <div className="flex items-center gap-1">
+                              <Shield className="w-3 h-3" />
+                              Admin
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              Missionário
+                            </div>
+                          )}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{usuario.igreja}</TableCell>
                       <TableCell className="text-sm text-gray-600">{usuario.login_acesso}</TableCell>
                       <TableCell>

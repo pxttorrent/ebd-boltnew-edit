@@ -151,6 +151,7 @@ export type Database = {
           login_acesso: string
           nome_completo: string
           senha: string
+          tipo: Database["public"]["Enums"]["tipo_usuario"]
           updated_at: string
         }
         Insert: {
@@ -164,6 +165,7 @@ export type Database = {
           login_acesso: string
           nome_completo: string
           senha: string
+          tipo?: Database["public"]["Enums"]["tipo_usuario"]
           updated_at?: string
         }
         Update: {
@@ -177,6 +179,7 @@ export type Database = {
           login_acesso?: string
           nome_completo?: string
           senha?: string
+          tipo?: Database["public"]["Enums"]["tipo_usuario"]
           updated_at?: string
         }
         Relationships: []
@@ -189,7 +192,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      tipo_usuario: "administrador" | "missionario"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -304,6 +307,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      tipo_usuario: ["administrador", "missionario"],
+    },
   },
 } as const

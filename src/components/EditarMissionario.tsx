@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Upload, X } from 'lucide-react';
+import { Camera, Upload, X, Shield, User } from 'lucide-react';
 import { Usuario, IgrejaOptions } from '../types';
 import { capitalizeWords } from '../utils/textUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
     senha: '',
     email_pessoal: usuario.email_pessoal || '',
     igreja: usuario.igreja,
+    tipo: usuario.tipo,
     foto_perfil: usuario.foto_perfil || ''
   });
   
@@ -113,7 +114,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome_completo || !formData.apelido || !formData.igreja) {
+    if (!formData.nome_completo || !formData.apelido || !formData.igreja || !formData.tipo) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -143,6 +144,7 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
       login_acesso,
       email_pessoal: formData.email_pessoal,
       igreja: formData.igreja,
+      tipo: formData.tipo,
       foto_perfil: formData.foto_perfil
     };
 
@@ -279,6 +281,29 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
               value={formData.senha}
               onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tipo">Tipo de Usuário *</Label>
+            <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value as Usuario['tipo'] }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="missionario">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Missionário
+                  </div>
+                </SelectItem>
+                <SelectItem value="administrador">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Administrador
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

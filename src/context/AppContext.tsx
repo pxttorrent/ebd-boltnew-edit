@@ -57,6 +57,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const typedUsuarios: Usuario[] = usuariosData.map(user => ({
         ...user,
         igreja: user.igreja as Usuario['igreja'],
+        tipo: user.tipo as Usuario['tipo'],
         permissoes: user.permissoes
       }));
       setUsuarios(typedUsuarios);

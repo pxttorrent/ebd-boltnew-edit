@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Usuario } from '../types';
+import { Usuario, TipoUsuarioLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Save, CheckCircle, XCircle, Edit, Trash } from 'lucide-react';
+import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User } from 'lucide-react';
 import EditarMissionario from '../components/EditarMissionario';
 
 export default function Configuracoes() {
@@ -18,7 +20,7 @@ export default function Configuracoes() {
   // Sincronizar com o contexto sempre que usuarios mudar
   useEffect(() => {
     console.log('Configurações - Usuários recebidos do contexto:', usuarios.length);
-    usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ') - Aprovado:', u.aprovado));
+    usuarios.forEach(u => console.log('- ', u.nome_completo, '(', u.login_acesso, ') - Aprovado:', u.aprovado, '- Tipo:', u.tipo));
     setLocalUsuarios([...usuarios]); // Criar uma nova cópia para garantir re-render
   }, [usuarios]);
 
@@ -33,6 +35,23 @@ export default function Configuracoes() {
           : usuario
       )
     );
+  };
+
+  const handleTipoChange = (userId: string, tipo: Usuario['tipo']) => {
+    const updatedUsuarios = localUsuarios.map(usuario => 
+      usuario.id === userId 
+        ? { ...usuario, tipo }
+        : usuario
+    );
+    setLocalUsuarios(updatedUsuarios);
+    
+    // Aplicar a mudança imediatamente no contexto
+    updateUsuario(userId, { tipo });
+    
+    toast({
+      title: "Tipo Atualizado!",
+      description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} agora é ${TipoUsuarioLabels[tipo]}.`
+    });
   };
 
   const handleApprovalChange = (userId: string, approved: boolean) => {
@@ -57,13 +76,14 @@ export default function Configuracoes() {
     localUsuarios.forEach(usuario => {
       updateUsuario(usuario.id, {
         permissoes: usuario.permissoes,
-        aprovado: usuario.aprovado
+        aprovado: usuario.aprovado,
+        tipo: usuario.tipo
       });
     });
     
     toast({
       title: "Sucesso!",
-      description: "Todas as permissões foram atualizadas com sucesso."
+      description: "Todas as configurações foram atualizadas com sucesso."
     });
   };
 
@@ -101,11 +121,12 @@ export default function Configuracoes() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
-                <p className="text-gray-600">Gerencie as permissões e aprovações dos usuários do sistema</p>
+                <p className="text-gray-600">Gerencie as permissões, tipos e aprovações dos usuários do sistema</p>
                 <div className="flex gap-4 text-sm mt-2">
                   <p className="text-blue-600">Total de usuários: {localUsuarios.length}</p>
                   <p className="text-yellow-600">Pendentes: {usuariosPendentes.length}</p>
                   <p className="text-green-600">Aprovados: {usuariosAprovados.length}</p>
+                  <p className="text-purple-600">Administradores: {usuariosAprovados.filter(u => u.tipo === 'administrador').length}</p>
                 </div>
               </div>
               <Button 
@@ -130,6 +151,7 @@ export default function Configuracoes() {
                     <TableRow className="bg-yellow-50">
                       <TableHead className="font-semibold text-gray-700">Nome</TableHead>
                       <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-center">Tipo</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Ação</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Gerenciar</TableHead>
                     </TableRow>
@@ -144,6 +166,30 @@ export default function Configuracoes() {
                           </div>
                         </TableCell>
                         <TableCell>{usuario.igreja}</TableCell>
+                        <TableCell className="text-center">
+                          <Select 
+                            value={usuario.tipo} 
+                            onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="missionario">
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4" />
+                                  Missionário
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="administrador">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-4 h-4" />
+                                  Administrador
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                         <TableCell className="text-center">
                           <div className="flex gap-2 justify-center">
                             <Button
@@ -209,6 +255,7 @@ export default function Configuracoes() {
                     <TableRow className="bg-gray-50">
                       <TableHead className="font-semibold text-gray-700">Nome</TableHead>
                       <TableHead className="font-semibold text-gray-700">Igreja</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-center">Tipo</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Status</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Pode Cadastrar</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-center">Pode Editar</TableHead>
@@ -228,9 +275,43 @@ export default function Configuracoes() {
                         </TableCell>
                         <TableCell>{usuario.igreja}</TableCell>
                         <TableCell className="text-center">
+                          <Select 
+                            value={usuario.tipo} 
+                            onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="missionario">
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4" />
+                                  Missionário
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="administrador">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-4 h-4" />
+                                  Administrador
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">
-                              Aprovado
+                            <Badge className={usuario.tipo === 'administrador' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}>
+                              {usuario.tipo === 'administrador' ? (
+                                <div className="flex items-center gap-1">
+                                  <Shield className="w-3 h-3" />
+                                  Admin
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <User className="w-3 h-3" />
+                                  Aprovado
+                                </div>
+                              )}
                             </Badge>
                             <Button
                               size="sm"
@@ -283,6 +364,19 @@ export default function Configuracoes() {
           <div className="p-6 bg-gray-50 rounded-b-xl">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Descrição das Configurações</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="font-medium text-gray-700 mb-1">Tipos de Usuário:</p>
+                <div className="space-y-1">
+                  <p className="text-gray-600 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-purple-600" />
+                    <strong>Administrador:</strong> Acesso a todas as igrejas
+                  </p>
+                  <p className="text-gray-600 flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <strong>Missionário:</strong> Acesso apenas à sua igreja
+                  </p>
+                </div>
+              </div>
               <div>
                 <p className="font-medium text-gray-700 mb-1">Status de Aprovação:</p>
                 <p className="text-gray-600">Usuários pendentes não podem fazer login no sistema</p>

@@ -9,6 +9,7 @@ export interface Usuario {
   igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
   aprovado: boolean;
   foto_perfil?: string;
+  tipo: 'administrador' | 'missionario';
   created_at?: string;
   updated_at?: string;
   permissoes: {
@@ -60,3 +61,8 @@ export const IgrejaOptions = [
   'Argeni',
   'Parque São José'
 ] as const;
+
+export const TipoUsuarioLabels = {
+  'administrador': 'Administrador',
+  'missionario': 'Missionário'
+};
