@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Usuario, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Trash, AlertCircle, Upload, X, Shield, User } from 'lucide-react';
+import { Edit, Trash, AlertCircle, Upload, X, Shield, User, Lock } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { hashPassword } from '../utils/passwordUtils';
 import { addUsuario } from '../services/localStorage';
@@ -17,9 +17,45 @@ import EditarMissionario from '../components/EditarMissionario';
 import FotoCropper from '../components/FotoCropper';
 
 export default function CadastroMissionarios() {
-  const { usuarios, updateUsuario, deleteUsuario, refreshData } = useApp();
+  const { usuarios, currentUser, updateUsuario, deleteUsuario, refreshData } = useApp();
   const { toast } = useToast();
   
+  // Verificar se o usuário atual é administrador
+  const isAdmin = currentUser?.tipo === 'administrador';
+
+  // Se não for administrador, mostrar mensagem de acesso negado
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <Lock className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Acesso Restrito
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Esta página é restrita apenas para administradores. Apenas administradores podem cadastrar e gerenciar usuários do sistema.
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                <div className="text-sm text-red-800">
+                  <p className="font-medium mb-1">Permissões necessárias:</p>
+                  <p>• Tipo de usuário: Administrador</p>
+                  <p>• Acesso atual: {currentUser?.tipo === 'missionario' ? 'Missionário' : 'Usuário'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [formData, setFormData] = useState({
     nome_completo: '',
     apelido: '',
