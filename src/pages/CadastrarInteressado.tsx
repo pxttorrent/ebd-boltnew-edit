@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -49,15 +50,16 @@ export default function CadastrarInteressado() {
       return;
     }
 
-    // Não definir ID aqui - deixar o Supabase gerar automaticamente
+    // Criar interessado com igreja definida igual à cidade
     const novoInteressado: Omit<Interessado, 'id'> = {
       ...formData,
+      igreja: formData.cidade, // Definir igreja igual à cidade para RLS
       status: formData.status as Interessado['status'] || 'E',
       instrutor_biblico: formData.instrutor_biblico || 'A definir',
       frequenta_cultos: formData.frequenta_cultos
     };
 
-    addInteressado(novoInteressado as Interessado);
+    addInteressado(novoInteressado);
     
     toast({
       title: "Sucesso!",

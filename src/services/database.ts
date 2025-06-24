@@ -126,16 +126,22 @@ export const fetchInteressados = async () => {
 };
 
 export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
+  // Garantir que igreja está definida - usar cidade se igreja não estiver definida
+  const interessadoComIgreja = {
+    ...interessado,
+    igreja: interessado.igreja || interessado.cidade
+  };
+
   const { data, error } = await supabase
     .from('interessados')
-    .insert({
-      ...interessado,
-      igreja: interessado.cidade // Definir igreja igual à cidade
-    })
+    .insert(interessadoComIgreja)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error adding interessado:', error);
+    throw error;
+  }
   return data;
 };
 
