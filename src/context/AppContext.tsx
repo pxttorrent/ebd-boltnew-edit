@@ -2,7 +2,17 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Usuario, Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
-import * as db from '../services/database';
+import {
+  getUsuarios,
+  addUsuario as addUsuarioToStorage,
+  updateUsuario as updateUsuarioInStorage,
+  deleteUsuario as deleteUsuarioFromStorage,
+  getInteressados,
+  addInteressado as addInteressadoToStorage,
+  updateInteressado as updateInteressadoInStorage,
+  deleteInteressado as deleteInteressadoFromStorage,
+  getCurrentUser
+} from '../services/localStorage';
 
 interface AppContextType {
   // Usuario management
@@ -51,34 +61,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setLoading(true);
       
       // Load usuarios and find current user
-      const usuariosData = await db.fetchUsuarios();
-      // Transform data to match our types with proper type assertions
-      const typedUsuarios: Usuario[] = usuariosData.map(user => ({
-        ...user,
-        igreja: user.igreja as Usuario['igreja'],
-        tipo: user.tipo as Usuario['tipo'],
-        permissoes: user.permissoes
-      }));
-      setUsuarios(typedUsuarios);
+      const usuariosData = getUsuarios();
+      setUsuarios(usuariosData);
       
       // Find current user by matching auth user ID
-      const currentUserData = typedUsuarios.find(u => u.id === user?.id);
+      const currentUserData = usuariosData.find(u => u.id === user?.id);
       setCurrentUser(currentUserData || null);
 
       if (currentUserData) {
         console.log('Usuário atual encontrado:', currentUserData);
       } else {
-        console.warn('Usuário atual não encontrado nos dados do banco');
+        console.warn('Usuário atual não encontrado nos dados do localStorage');
       }
 
       // Load interessados
-      const interessadosData = await db.fetchInteressados();
-      // Transform data to match our types with proper type assertions
-      const typedInteressados: Interessado[] = interessadosData.map(interessado => ({
-        ...interessado,
-        status: interessado.status as Interessado['status']
-      }));
-      setInteressados(typedInteressados);
+      const interessadosData = getInteressados();
+      setInteressados(interessadosData);
 
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -99,8 +97,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Usuario operations
   const addUsuario = async (usuario: Usuario) => {
     try {
-      const newUsuario = await db.addUsuario(usuario);
-      setUsuarios(prev => [...prev, { ...usuario, id: newUsuario.id }]);
+      const newUsuario = addUsuarioToStorage(usuario);
+      setUsuarios(prev => [...prev, newUsuario]);
       
       toast({
         title: "Sucesso!",
@@ -119,7 +117,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
     try {
-      await db.updateUsuario(id, updates);
+      updateUsuarioInStorage(id, updates);
       
       setUsuarios(prev => 
         prev.map(usuario => 
@@ -149,7 +147,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteUsuario = async (id: string) => {
     try {
-      await db.deleteUsuario(id);
+      deleteUsuarioFromStorage(id);
       setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
       
       toast({
@@ -171,16 +169,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
     try {
       console.log('Context: Adicionando interessado:', interessado);
-      const newInteressadoData = await db.addInteressado(interessado);
-      console.log('Context: Interessado adicionado:', newInteressadoData);
       
-      // Transform the returned data to match our Interessado type
-      const typedNewInteressado: Interessado = {
-        ...newInteressadoData,
-        status: newInteressadoData.status as Interessado['status']
-      };
+      // Verificar se há usuário logado
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      if (!currentUser.aprovado) {
+        throw new Error('Usuário não aprovado para realizar esta operação');
+      }
+
+      if (!currentUser.permissoes?.pode_cadastrar) {
+        throw new Error('Usuário não tem permissão para cadastrar interessados');
+      }
+
+      // Verificar se a igreja do interessado corresponde à igreja do usuário (exceto para admins)
+      if (currentUser.tipo !== 'administrador' && interessado.igreja !== currentUser.igreja) {
+        throw new Error('Você só pode cadastrar interessados da sua igreja');
+      }
+
+      const newInteressado = addInteressadoToStorage(interessado);
+      console.log('Context: Interessado adicionado:', newInteressado);
       
-      setInteressados(prev => [...prev, typedNewInteressado]);
+      setInteressados(prev => [...prev, newInteressado]);
       
       toast({
         title: "Sucesso!",
@@ -195,7 +207,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateInteressado = async (id: string, updates: Partial<Interessado>) => {
     try {
-      await db.updateInteressado(id, updates);
+      updateInteressadoInStorage(id, updates);
       
       setInteressados(prev => 
         prev.map(interessado => 
@@ -220,7 +232,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteInteressado = async (id: string) => {
     try {
-      await db.deleteInteressado(id);
+      deleteInteressadoFromStorage(id);
       setInteressados(prev => prev.filter(interessado => interessado.id !== id));
       
       toast({

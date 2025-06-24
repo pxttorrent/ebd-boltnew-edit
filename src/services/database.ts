@@ -1,4 +1,3 @@
-
 import { Usuario, Interessado } from '../types';
 import { hashPassword } from '../utils/passwordUtils';
 import {
