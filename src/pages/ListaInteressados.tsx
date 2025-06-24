@@ -48,18 +48,34 @@ export default function ListaInteressados() {
 
   // Filtrar interessados baseado no tipo de usuário
   const filteredInteressados = useMemo(() => {
+    console.log('=== DEBUG FILTRO ===');
+    console.log('Total interessados:', interessados.length);
+    console.log('Current user:', currentUser);
+    console.log('Interessados:', interessados.map(i => ({ 
+      nome: i.nome_completo, 
+      instrutor: i.instrutor_biblico 
+    })));
+
     let baseInteressados = interessados;
 
     // Aplicar filtro por tipo de usuário
     if (currentUser?.tipo === 'missionario') {
+      console.log('Filtrando para missionário:', currentUser.nome_completo);
+      
       // Missionários só podem ver interessados dos quais são instrutores bíblicos
-      baseInteressados = interessados.filter(interessado => 
-        interessado.instrutor_biblico === currentUser.nome_completo
-      );
+      baseInteressados = interessados.filter(interessado => {
+        const isInstrutor = interessado.instrutor_biblico === currentUser.nome_completo;
+        console.log(`Interessado: ${interessado.nome_completo}, Instrutor: ${interessado.instrutor_biblico}, É instrutor?: ${isInstrutor}`);
+        return isInstrutor;
+      });
+      
+      console.log('Interessados filtrados para missionário:', baseInteressados.length);
+    } else {
+      console.log('Usuário é administrador, sem filtro adicional');
     }
-    // Administradores veem todos os interessados (sem filtro adicional)
 
-    return baseInteressados.filter(interessado => {
+    // Aplicar filtros de busca
+    const finalFiltered = baseInteressados.filter(interessado => {
       const matchesSearch = interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         interessado.telefone.includes(searchTerm) ||
         interessado.cidade.toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,6 +86,11 @@ export default function ListaInteressados() {
       
       return matchesSearch && matchesStatus && matchesCidade;
     });
+
+    console.log('Interessados após filtros de busca:', finalFiltered.length);
+    console.log('=== FIM DEBUG ===');
+
+    return finalFiltered;
   }, [interessados, searchTerm, statusFilter, cidadeFilter, currentUser]);
 
   // Obter cidades únicas baseado nos interessados que o usuário pode ver
