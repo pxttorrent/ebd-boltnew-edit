@@ -1,20 +1,18 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileText, Trash2 } from 'lucide-react';
+import { Download, Upload, FileText } from 'lucide-react';
 
 interface InteressadosActionsProps {
   onImport: () => void;
   onGenerateReport: () => void;
   onExport: () => void;
-  onClearAll: () => void;
 }
 
 export default function InteressadosActions({
   onImport,
   onGenerateReport,
-  onExport,
-  onClearAll
+  onExport
 }: InteressadosActionsProps) {
   return (
     <div className="flex gap-2">
@@ -36,14 +34,6 @@ export default function InteressadosActions({
       >
         <Download className="w-4 h-4" />
         Exportar
-      </Button>
-      <Button 
-        onClick={onClearAll}
-        variant="destructive"
-        className="flex items-center gap-2"
-      >
-        <Trash2 className="w-4 h-4" />
-        Apagar Todos
       </Button>
     </div>
   );

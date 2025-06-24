@@ -313,7 +313,6 @@ export default function ListaInteressados() {
                 onImport={handleImport}
                 onGenerateReport={openColumnSelector}
                 onExport={handleExport}
-                onClearAll={handleClearAll}
               />
             </div>
 
