@@ -46,7 +46,7 @@ export default function CadastroMissionarios() {
                 <div className="text-sm text-red-800">
                   <p className="font-medium mb-1">Permissões necessárias:</p>
                   <p>• Tipo de usuário: Administrador</p>
-                  <p>• Acesso atual: {currentUser?.tipo === 'missionario' ? 'Missionário' : 'Usuário'}</p>
+                  <p>• Acesso atual: {currentUser?.tipo === 'administrador' ? 'Administrador' : currentUser?.tipo === 'missionario' ? 'Missionário' : 'Usuário'}</p>
                 </div>
               </div>
             </div>
