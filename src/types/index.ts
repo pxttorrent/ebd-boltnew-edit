@@ -64,3 +64,12 @@ export const TipoUsuarioLabels = {
   'administrador': 'Administrador',
   'missionario': 'Missionário'
 };
+
+export const IgrejaOptions = [
+  'Armour',
+  'Dom Pedrito',
+  'Quaraí',
+  'Santana do Livramento',
+  'Argeni',
+  'Parque São José'
+];
