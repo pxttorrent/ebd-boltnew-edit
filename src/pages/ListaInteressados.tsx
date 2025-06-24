@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -51,12 +50,9 @@ export default function ListaInteressados() {
   const filteredInteressados = useMemo(() => {
     let baseInteressados = interessados;
 
-    // Se for missionário, mostrar interessados que ele cadastrou OU onde ele é instrutor
-    if (currentUser?.tipo === 'missionario') {
-      baseInteressados = interessados.filter(interessado => 
-        interessado.instrutor_biblico === currentUser.nome_completo
-      );
-    }
+    // Missionários podem ver todos os interessados cadastrados
+    // Administradores também veem todos
+    // Não há filtro por tipo de usuário - todos veem todos os interessados
 
     return baseInteressados.filter(interessado => {
       const matchesSearch = interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,21 +65,13 @@ export default function ListaInteressados() {
       
       return matchesSearch && matchesStatus && matchesCidade;
     });
-  }, [interessados, currentUser, searchTerm, statusFilter, cidadeFilter]);
+  }, [interessados, searchTerm, statusFilter, cidadeFilter]);
 
-  // Obter cidades únicas baseado nos interessados visíveis
+  // Obter cidades únicas baseado em todos os interessados
   const cidadesUnicas = useMemo(() => {
-    let baseInteressados = interessados;
-    
-    // Se for missionário, considerar interessados que ele cadastrou OU onde ele é instrutor
-    if (currentUser?.tipo === 'missionario') {
-      baseInteressados = interessados.filter(interessado => 
-        interessado.instrutor_biblico === currentUser.nome_completo
-      );
-    }
-    
-    return [...new Set(baseInteressados.map(i => i.cidade))].sort();
-  }, [interessados, currentUser]);
+    // Todos os usuários podem ver todas as cidades
+    return [...new Set(interessados.map(i => i.cidade))].sort();
+  }, [interessados]);
 
   const handleDelete = (id: string, nome: string) => {
     if (window.confirm(`Tem certeza que deseja excluir ${nome}?`)) {
@@ -285,9 +273,7 @@ export default function ListaInteressados() {
     if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
       return 'Nenhum interessado encontrado com os critérios de busca.';
     }
-    return currentUser?.tipo === 'missionario' 
-      ? 'Você ainda não cadastrou nenhum interessado.'
-      : 'Nenhum interessado cadastrado ainda.';
+    return 'Nenhum interessado cadastrado ainda.';
   };
 
   return (
