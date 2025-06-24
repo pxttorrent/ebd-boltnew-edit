@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,24 @@ export default function CadastroMissionarios() {
   const { usuarios, currentUser, updateUsuario, deleteUsuario, refreshData } = useApp();
   const { toast } = useToast();
   
-  // Verificar se o usuário atual é administrador
+  // Todos os hooks devem estar no topo, antes de qualquer retorno condicional
+  const [formData, setFormData] = useState({
+    nome_completo: '',
+    apelido: '',
+    senha: '',
+    email_pessoal: '',
+    igreja: '' as Usuario['igreja'] | '',
+    tipo: 'missionario' as Usuario['tipo'],
+    foto_perfil: ''
+  });
+
+  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [tempImageSrc, setTempImageSrc] = useState('');
+
+  // Verificar se o usuário atual é administrador APÓS todos os hooks
   const isAdmin = currentUser?.tipo === 'administrador';
 
   // Se não for administrador, mostrar mensagem de acesso negado
@@ -55,22 +73,6 @@ export default function CadastroMissionarios() {
       </div>
     );
   }
-
-  const [formData, setFormData] = useState({
-    nome_completo: '',
-    apelido: '',
-    senha: '',
-    email_pessoal: '',
-    igreja: '' as Usuario['igreja'] | '',
-    tipo: 'missionario' as Usuario['tipo'],
-    foto_perfil: ''
-  });
-
-  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [tempImageSrc, setTempImageSrc] = useState('');
 
   const login_acesso = formData.apelido ? `${formData.apelido}@escola-biblica.app` : '';
 
@@ -471,7 +473,7 @@ export default function CadastroMissionarios() {
                           {usuario.tipo === 'administrador' ? (
                             <div className="flex items-center gap-1">
                               <Shield className="w-3 h-3" />
-                              Admin
+                              Administrador
                             </div>
                           ) : (
                             <div className="flex items-center gap-1">
