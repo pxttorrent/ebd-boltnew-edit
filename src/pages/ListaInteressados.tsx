@@ -269,6 +269,20 @@ export default function ListaInteressados() {
     setIsEdicaoRapidaOpen(true);
   };
 
+  const handleClearAll = () => {
+    if (window.confirm('Tem certeza que deseja apagar TODOS os interessados? Esta ação não pode ser desfeita.')) {
+      // Apagar todos os interessados um por um
+      interessados.forEach(interessado => {
+        deleteInteressado(interessado.id);
+      });
+      
+      toast({
+        title: "Sucesso!",
+        description: `${interessados.length} interessados foram excluídos.`
+      });
+    }
+  };
+
   const getEmptyMessage = () => {
     if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
       return 'Nenhum interessado encontrado com os critérios de busca.';
@@ -299,6 +313,7 @@ export default function ListaInteressados() {
                 onImport={handleImport}
                 onGenerateReport={openColumnSelector}
                 onExport={handleExport}
+                onClearAll={handleClearAll}
               />
             </div>
 
