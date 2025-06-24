@@ -40,6 +40,16 @@ export default function Configuracoes() {
   };
 
   const handleTipoChange = async (userId: string, tipo: Usuario['tipo']) => {
+    // Only allow admins to change user types
+    if (currentUser?.tipo !== 'administrador') {
+      toast({
+        title: "Acesso Negado",
+        description: "Apenas administradores podem alterar tipos de usuários.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Update immediately in context
       await updateUsuario(userId, { tipo });
@@ -303,8 +313,9 @@ export default function Configuracoes() {
                           <Select 
                             value={usuario.tipo} 
                             onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
+                            disabled={!isAdmin}
                           >
-                            <SelectTrigger className="w-32">
+                            <SelectTrigger className={`w-32 ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -427,8 +438,9 @@ export default function Configuracoes() {
                           <Select 
                             value={usuario.tipo} 
                             onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
+                            disabled={!isAdmin}
                           >
-                            <SelectTrigger className="w-32">
+                            <SelectTrigger className={`w-32 ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -523,6 +535,9 @@ export default function Configuracoes() {
                   <p className="text-gray-600 flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
                     <strong>Missionário:</strong> Acesso apenas à sua igreja
+                  </p>
+                  <p className="text-red-600 text-xs mt-2">
+                    <strong>Importante:</strong> Apenas administradores podem alterar tipos de usuários
                   </p>
                 </div>
               </div>
