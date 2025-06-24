@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -58,6 +57,7 @@ export default function CadastroInstrutorInline({
       senha: formData.senha,
       igreja: formData.igreja,
       aprovado: true,
+      tipo: 'missionario', // Adicionar o tipo obrigatório
       permissoes: {
         pode_cadastrar: true,
         pode_editar: true,
