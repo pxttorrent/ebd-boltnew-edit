@@ -51,7 +51,7 @@ export default function ListaInteressados() {
   const filteredInteressados = useMemo(() => {
     let baseInteressados = interessados;
 
-    // Se for missionário, mostrar apenas interessados que ele cadastrou
+    // Se for missionário, mostrar interessados que ele cadastrou OU onde ele é instrutor
     if (currentUser?.tipo === 'missionario') {
       baseInteressados = interessados.filter(interessado => 
         interessado.instrutor_biblico === currentUser.nome_completo
@@ -75,7 +75,7 @@ export default function ListaInteressados() {
   const cidadesUnicas = useMemo(() => {
     let baseInteressados = interessados;
     
-    // Se for missionário, considerar apenas interessados que ele cadastrou
+    // Se for missionário, considerar interessados que ele cadastrou OU onde ele é instrutor
     if (currentUser?.tipo === 'missionario') {
       baseInteressados = interessados.filter(interessado => 
         interessado.instrutor_biblico === currentUser.nome_completo
