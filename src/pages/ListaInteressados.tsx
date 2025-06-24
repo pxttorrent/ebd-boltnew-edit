@@ -48,14 +48,24 @@ export default function ListaInteressados() {
 
   // Filtrar interessados baseado no tipo de usuário
   const filteredInteressados = useMemo(() => {
+    console.log('=== DEBUG FILTRO MISSIONÁRIO ===');
+    console.log('Current user:', currentUser);
+    console.log('Total interessados:', interessados.length);
+    
     let baseInteressados = interessados;
 
     // Aplicar filtro por tipo de usuário
     if (currentUser?.tipo === 'missionario') {
+      console.log('Filtrando para missionário:', currentUser.nome_completo);
+      
       // Missionários só podem ver interessados dos quais são instrutores bíblicos
-      baseInteressados = interessados.filter(interessado => 
-        interessado.instrutor_biblico === currentUser.nome_completo
-      );
+      baseInteressados = interessados.filter(interessado => {
+        const isInstrutor = interessado.instrutor_biblico.toLowerCase().trim() === currentUser.nome_completo.toLowerCase().trim();
+        console.log(`Interessado: ${interessado.nome_completo}, Instrutor: '${interessado.instrutor_biblico}', User: '${currentUser.nome_completo}', Match: ${isInstrutor}`);
+        return isInstrutor;
+      });
+      
+      console.log('Interessados filtrados para missionário:', baseInteressados.length);
     }
 
     // Aplicar filtros de busca
@@ -71,6 +81,9 @@ export default function ListaInteressados() {
       return matchesSearch && matchesStatus && matchesCidade;
     });
 
+    console.log('Interessados finais após filtros:', finalFiltered.length);
+    console.log('=== FIM DEBUG ===');
+
     return finalFiltered;
   }, [interessados, searchTerm, statusFilter, cidadeFilter, currentUser]);
 
@@ -81,7 +94,7 @@ export default function ListaInteressados() {
     // Aplicar o mesmo filtro por tipo de usuário para as cidades
     if (currentUser?.tipo === 'missionario') {
       interessadosVisiveis = interessados.filter(interessado => 
-        interessado.instrutor_biblico === currentUser.nome_completo
+        interessado.instrutor_biblico.toLowerCase().trim() === currentUser.nome_completo.toLowerCase().trim()
       );
     }
     
@@ -91,7 +104,7 @@ export default function ListaInteressados() {
   const handleDelete = (id: string, nome: string) => {
     // Verificar se o usuário pode excluir este interessado
     const interessado = interessados.find(i => i.id === id);
-    if (currentUser?.tipo === 'missionario' && interessado?.instrutor_biblico !== currentUser.nome_completo) {
+    if (currentUser?.tipo === 'missionario' && interessado?.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
       toast({
         title: "Acesso negado",
         description: "Você só pode excluir interessados dos quais é instrutor bíblico.",
@@ -111,7 +124,7 @@ export default function ListaInteressados() {
 
   const handleEdit = (interessado: Interessado) => {
     // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico !== currentUser.nome_completo) {
+    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
       toast({
         title: "Acesso negado",
         description: "Você só pode editar interessados dos quais é instrutor bíblico.",
@@ -275,7 +288,7 @@ export default function ListaInteressados() {
 
   const handleInstrutorClick = (interessado: Interessado) => {
     // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico !== currentUser.nome_completo) {
+    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
       toast({
         title: "Acesso negado",
         description: "Você só pode editar interessados dos quais é instrutor bíblico.",
@@ -311,7 +324,7 @@ export default function ListaInteressados() {
 
   const handleEdicaoRapida = (interessado: Interessado, campo: 'status' | 'instrutor_biblico' | 'frequenta_cultos') => {
     // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico !== currentUser.nome_completo) {
+    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
       toast({
         title: "Acesso negado",
         description: "Você só pode editar interessados dos quais é instrutor bíblico.",
@@ -324,25 +337,6 @@ export default function ListaInteressados() {
     setCampoEdicaoRapida(campo);
     setIsEdicaoRapidaOpen(true);
   };
-
-  const handleClearAll = () => {
-    if (window.confirm('Tem certeza que deseja apagar TODOS os interessados? Esta ação não pode ser desfeita.')) {
-      // Apagar todos os interessados um por um
-      interessados.forEach(interessado => {
-        deleteInteressado(interessado.id);
-      });
-      
-      toast({
-        title: "Sucesso!",
-        description: `${interessados.length} interessados foram excluídos.`
-      });
-    }
-  };
-
-  // Executar a limpeza automaticamente
-  useEffect(() => {
-    handleClearAll();
-  }, []);
 
   const getEmptyMessage = () => {
     if (currentUser?.tipo === 'missionario') {
