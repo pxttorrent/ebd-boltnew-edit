@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle, Upload, X, Shield, User } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { hashPassword } from '../utils/passwordUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { addUsuario } from '../services/localStorage';
 import EditarMissionario from '../components/EditarMissionario';
 import FotoCropper from '../components/FotoCropper';
 
@@ -118,52 +117,26 @@ export default function CadastroMissionarios() {
       const hashedPassword = await hashPassword(formData.senha);
       console.log('Senha hasheada com sucesso');
       
-      // Insert directly into Supabase usuarios table
-      const { data: usuario, error: insertError } = await supabase
-        .from('usuarios')
-        .insert({
-          nome_completo: formData.nome_completo,
-          apelido: formData.apelido,
-          login_acesso,
-          senha: hashedPassword,
-          email_pessoal: formData.email_pessoal,
-          igreja: formData.igreja,
-          tipo: formData.tipo,
-          foto_perfil: formData.foto_perfil || null,
-          aprovado: true // Admin is creating, so auto-approve
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Erro ao inserir usuário:', insertError);
-        throw new Error(insertError.message || 'Erro ao inserir usuário no banco de dados');
-      }
-
-      console.log('Usuário inserido com sucesso:', usuario);
-
-      // Insert default permissions with admin privileges
-      const { error: permissionsError } = await supabase
-        .from('usuario_permissoes')
-        .insert({
-          usuario_id: usuario.id,
+      // Create new user
+      const usuario = addUsuario({
+        nome_completo: formData.nome_completo,
+        apelido: formData.apelido,
+        login_acesso,
+        senha: hashedPassword,
+        email_pessoal: formData.email_pessoal,
+        igreja: formData.igreja,
+        tipo: formData.tipo,
+        foto_perfil: formData.foto_perfil || null,
+        aprovado: true, // Admin is creating, so auto-approve
+        permissoes: {
           pode_cadastrar: true,
           pode_editar: true,
           pode_excluir: formData.tipo === 'administrador', // Only admins can delete by default
           pode_exportar: true
-        });
+        }
+      });
 
-      if (permissionsError) {
-        console.error('Erro ao inserir permissões:', permissionsError);
-        // Don't throw here, user was created successfully
-        toast({
-          title: "Aviso",
-          description: "Usuário criado, mas houve problema ao definir permissões. Verifique as permissões posteriormente.",
-          variant: "default"
-        });
-      } else {
-        console.log('Permissões inseridas com sucesso');
-      }
+      console.log('Usuário criado com sucesso:', usuario);
 
       // Refresh data to update the UI
       await refreshData();

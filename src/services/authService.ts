@@ -1,27 +1,23 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { hashPassword, verifyPassword } from '@/utils/passwordUtils';
 import {
-  createEmailForAuth,
-  findUserByApelido,
-  createSupabaseAuthUser,
-  signInWithSupabase,
-  createUserPermissions,
-  cleanupAuthState
-} from '@/utils/authUtils';
+  findUsuarioByApelido,
+  addUsuario,
+  setCurrentUser,
+  clearStorage,
+  initializeStorage
+} from './localStorage';
+
+// Initialize storage on import
+initializeStorage();
 
 export const loginUser = async (apelido: string, senha: string) => {
   try {
     console.log('Attempting to sign in with apelido:', apelido);
     
-    const { usuario, error: userError } = await findUserByApelido(apelido);
+    const usuario = findUsuarioByApelido(apelido);
 
-    console.log('User query result:', { usuario, userError });
-
-    if (userError) {
-      console.error('Database error:', userError);
-      return { error: 'Erro ao conectar com o banco de dados' };
-    }
+    console.log('User query result:', { usuario });
 
     if (!usuario) {
       return { error: 'Usuário não encontrado' };
@@ -37,37 +33,13 @@ export const loginUser = async (apelido: string, senha: string) => {
       return { error: 'Senha incorreta' };
     }
 
-    console.log('Password verified, attempting Supabase auth...');
+    console.log('Password verified, setting current user...');
 
-    const emailForAuth = createEmailForAuth(usuario.login_acesso);
-
-    // Try to sign in with Supabase Auth
-    const { authData, authError } = await signInWithSupabase(emailForAuth, senha);
-
-    if (authError) {
-      console.log('Auth user does not exist, creating one...', authError.message);
-      
-      // If auth user doesn't exist, create one
-      const { signUpData, signUpError } = await createSupabaseAuthUser(emailForAuth, senha, usuario);
-
-      if (signUpError) {
-        console.error('Sign up error:', signUpError);
-        return { error: signUpError.message };
-      }
-
-      // If sign up was successful, try to sign in again
-      if (signUpData.user) {
-        const { authError: secondSignInError } = await signInWithSupabase(emailForAuth, senha);
-        
-        if (secondSignInError) {
-          console.error('Second sign in error:', secondSignInError);
-          return { error: secondSignInError.message };
-        }
-      }
-    }
+    // Set current user in localStorage
+    setCurrentUser(usuario);
 
     console.log('Authentication successful');
-    return {};
+    return { user: usuario };
   } catch (error: any) {
     console.error('Sign in error:', error);
     return { error: error.message || 'Erro desconhecido durante o login' };
@@ -98,75 +70,32 @@ export const registerUser = async (userData: any) => {
     // Hash the password before storing
     const hashedPassword = await hashPassword(userData.senha);
     
-    const emailForAuth = createEmailForAuth(userData.login_acesso);
-    
     // Verificar se o apelido já existe
-    const { data: existingUser } = await supabase
-      .from('usuarios')
-      .select('apelido')
-      .eq('apelido', userData.apelido)
-      .maybeSingle();
-
+    const existingUser = findUsuarioByApelido(userData.apelido);
     if (existingUser) {
       return { error: 'Este apelido já está em uso. Escolha outro.' };
     }
 
-    // Verificar se o e-mail já existe
-    const { data: existingEmail } = await supabase
-      .from('usuarios')
-      .select('email_pessoal')
-      .eq('email_pessoal', userData.email_pessoal)
-      .maybeSingle();
-
-    if (existingEmail) {
-      return { error: 'Este e-mail já está cadastrado. Use outro e-mail.' };
-    }
-
-    // Insert into usuarios table directly
-    const { data: usuario, error: insertError } = await supabase
-      .from('usuarios')
-      .insert({
-        nome_completo: userData.nome_completo,
-        apelido: userData.apelido,
-        login_acesso: userData.login_acesso,
-        senha: hashedPassword,
-        email_pessoal: userData.email_pessoal,
-        igreja: userData.igreja,
-        foto_perfil: userData.foto_perfil || null,
-        aprovado: false // Sempre iniciar como não aprovado
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      
-      // Tratar erros específicos
-      if (insertError.code === '23505') { // Unique violation
-        if (insertError.message.includes('apelido')) {
-          return { error: 'Este apelido já está em uso. Escolha outro.' };
-        } else if (insertError.message.includes('login_acesso')) {
-          return { error: 'Este email já está cadastrado.' };
-        } else if (insertError.message.includes('email_pessoal')) {
-          return { error: 'Este e-mail pessoal já está cadastrado.' };
-        }
-        return { error: 'Já existe um usuário com estes dados.' };
+    // Create new user
+    const newUser = addUsuario({
+      nome_completo: userData.nome_completo,
+      apelido: userData.apelido,
+      login_acesso: userData.login_acesso,
+      senha: hashedPassword,
+      email_pessoal: userData.email_pessoal,
+      igreja: userData.igreja,
+      tipo: userData.tipo || 'missionario',
+      foto_perfil: userData.foto_perfil || null,
+      aprovado: false, // Sempre iniciar como não aprovado
+      permissoes: {
+        pode_cadastrar: false,
+        pode_editar: false,
+        pode_excluir: false,
+        pode_exportar: false
       }
-      
-      return { error: insertError.message };
-    }
+    });
 
-    console.log('User inserted successfully:', usuario);
-
-    // Insert default permissions
-    const { error: permissionsError } = await createUserPermissions(usuario.id);
-
-    if (permissionsError) {
-      console.error('Permissions error:', permissionsError);
-      // Não falhar o cadastro se as permissões não foram criadas
-      console.warn('User created but permissions not set. Admin can set them later.');
-    }
-
+    console.log('User created successfully:', newUser);
     console.log('Signup completed successfully');
     return {};
   } catch (error: any) {
@@ -176,11 +105,11 @@ export const registerUser = async (userData: any) => {
 };
 
 export const logoutUser = async () => {
-  // Clear local storage
-  cleanupAuthState();
+  // Clear current user
+  setCurrentUser(null);
   
-  // Sign out from Supabase
-  await supabase.auth.signOut();
+  // Clear any auth-related localStorage items
+  localStorage.removeItem('escola_biblica_usuario');
   
   // Force page reload to ensure clean state
   window.location.href = '/';
