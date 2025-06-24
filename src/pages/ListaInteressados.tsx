@@ -1,21 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StatusLabels, StatusColors, Interessado } from '../types';
-import { Search, Download, Upload, Edit, Trash, Filter, FileText } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
 import ColumnSelector, { ColumnOption } from '../components/ColumnSelector';
 import ImportarDados from '../components/ImportarDados';
 import EdicaoRapida from '../components/EdicaoRapida';
+import CadastroInstrutorInline from '../components/CadastroInstrutorInline';
+import InteressadosFilters from '../components/InteressadosFilters';
+import InteressadosActions from '../components/InteressadosActions';
+import InteressadosStats from '../components/InteressadosStats';
+import InteressadosTable from '../components/InteressadosTable';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-import CadastroInstrutorInline from '../components/CadastroInstrutorInline';
 
 export default function ListaInteressados() {
   const { interessados, deleteInteressado, usuarios, currentUser } = useApp();
@@ -282,6 +280,15 @@ export default function ListaInteressados() {
     setIsEdicaoRapidaOpen(true);
   };
 
+  const getEmptyMessage = () => {
+    if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
+      return 'Nenhum interessado encontrado com os critérios de busca.';
+    }
+    return currentUser?.tipo === 'missionario' 
+      ? 'Você ainda não cadastrou nenhum interessado.'
+      : 'Nenhum interessado cadastrado ainda.';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -291,195 +298,46 @@ export default function ListaInteressados() {
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Lista de Interessados</h1>
             
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="flex flex-col md:flex-row gap-4 flex-1">
-                {/* Busca */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Buscar por nome, telefone ou igreja..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                {/* Filtros */}
-                <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos os Status</SelectItem>
-                      <SelectItem value="A">A - Pronto para batismo</SelectItem>
-                      <SelectItem value="B">B - Decidido, com detalhes</SelectItem>
-                      <SelectItem value="C">C - Estudando, indeciso</SelectItem>
-                      <SelectItem value="D">D - Estudando atualmente</SelectItem>
-                      <SelectItem value="E">E - Contato inicial</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={cidadeFilter} onValueChange={setCidadeFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Igreja" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todas">Todas as Igrejas</SelectItem>
-                      {cidadesUnicas.map(cidade => (
-                        <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <InteressadosFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                cidadeFilter={cidadeFilter}
+                setCidadeFilter={setCidadeFilter}
+                cidadesUnicas={cidadesUnicas}
+              />
               
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleImport} className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Importar
-                </Button>
-                <Button 
-                  onClick={openColumnSelector}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  Relatório
-                </Button>
-                <Button 
-                  onClick={handleExport}
-                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Exportar
-                </Button>
-              </div>
+              <InteressadosActions
+                onImport={handleImport}
+                onGenerateReport={openColumnSelector}
+                onExport={handleExport}
+              />
             </div>
 
-            {/* Resumo dos filtros */}
-            <div className="mt-4 text-sm text-gray-600">
-              Mostrando {filteredInteressados.length} de {interessados.length} interessados
-              {currentUser?.tipo === 'missionario' && (
-                <span className="text-blue-600 font-medium"> (seus cadastros)</span>
-              )}
-            </div>
+            <InteressadosStats
+              filteredCount={filteredInteressados.length}
+              totalCount={interessados.length}
+              currentUser={currentUser}
+            />
           </div>
 
-          {/* Table with horizontal scroll for all columns */}
+          {/* Table */}
           <div className="p-6">
             {filteredInteressados.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
-                  {searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas' 
-                    ? 'Nenhum interessado encontrado com os critérios de busca.' 
-                    : currentUser?.tipo === 'missionario' 
-                      ? 'Você ainda não cadastrou nenhum interessado.'
-                      : 'Nenhum interessado cadastrado ainda.'}
-                </p>
+                <p className="text-gray-500 text-lg">{getEmptyMessage()}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table className="min-w-[1400px]">
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Nome</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Telefone</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Endereço</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Igreja</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[180px]">Status</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[150px]">Instrutor</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[120px]">Data Contato</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[150px]">Participação Eventos</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[200px]">Estudo Bíblico</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[250px]">Observações</TableHead>
-                      <TableHead className="font-semibold text-gray-700 min-w-[120px] text-center">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInteressados.map((interessado) => (
-                      <TableRow key={interessado.id} className="hover:bg-gray-50">
-                        <TableCell className="font-medium">{interessado.nome_completo}</TableCell>
-                        <TableCell>{interessado.telefone}</TableCell>
-                        <TableCell>{interessado.endereco || '-'}</TableCell>
-                        <TableCell>{interessado.cidade}</TableCell>
-                        <TableCell>
-                          <div 
-                            className="cursor-pointer"
-                            onClick={() => handleEdicaoRapida(interessado, 'status')}
-                            title="Clique para editar"
-                          >
-                            <Badge className={StatusColors[interessado.status]}>
-                              {interessado.status} - {StatusLabels[interessado.status]}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div 
-                            className={`cursor-pointer hover:text-blue-600 hover:underline ${
-                              !usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
-                              interessado.instrutor_biblico !== 'A definir' 
-                                ? 'text-red-600 font-medium' 
-                                : ''
-                            }`}
-                            onClick={() => handleInstrutorClick(interessado)}
-                            title={
-                              !usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
-                              interessado.instrutor_biblico !== 'A definir'
-                                ? "Instrutor não cadastrado - Clique para cadastrar"
-                                : "Clique para editar"
-                            }
-                          >
-                            {interessado.instrutor_biblico}
-                            {!usuarios.some(u => u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()) && 
-                             interessado.instrutor_biblico !== 'A definir' && (
-                              <span className="text-xs block">📝 Cadastrar</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{interessado.data_contato ? new Date(interessado.data_contato).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                        <TableCell>
-                          <div 
-                            className="cursor-pointer hover:text-blue-600 hover:underline"
-                            onClick={() => handleEdicaoRapida(interessado, 'frequenta_cultos')}
-                            title="Clique para editar"
-                          >
-                            {interessado.frequenta_cultos || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell>{interessado.estudo_biblico || '-'}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px] truncate" title={interessado.observacoes}>
-                            {interessado.observacoes || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1 justify-center">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2"
-                              onClick={() => handleEdit(interessado)}
-                              title="Editar interessado"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
-                              onClick={() => handleDelete(interessado.id, interessado.nome_completo)}
-                              title="Excluir interessado"
-                            >
-                              <Trash className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <InteressadosTable
+                interessados={filteredInteressados}
+                usuarios={usuarios}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onStatusClick={handleEdicaoRapida}
+                onInstrutorClick={handleInstrutorClick}
+                onFrequentaCultosClick={handleEdicaoRapida}
+              />
             )}
           </div>
         </div>
