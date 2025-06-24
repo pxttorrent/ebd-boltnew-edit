@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { findUsuarioByEmail, updateUsuario } from '@/services/localStorage';
+import { hashPassword } from '@/utils/passwordUtils';
 
 interface RecuperarSenhaProps {
   onVoltar: () => void;
@@ -19,6 +20,8 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
+  const [codigoGerado, setCodigoGerado] = useState('');
+  const [usuarioEncontrado, setUsuarioEncontrado] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSolicitarCodigo = async (e: React.FormEvent) => {
@@ -47,21 +50,7 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
 
     try {
       // Verificar se existe um usuário com este email pessoal
-      const { data: usuario, error: userError } = await supabase
-        .from('usuarios')
-        .select('id, nome_completo, email_pessoal')
-        .eq('email_pessoal', email)
-        .maybeSingle();
-
-      if (userError) {
-        console.error('Erro ao buscar usuário:', userError);
-        toast({
-          title: "Erro",
-          description: "Erro ao processar solicitação. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
-      }
+      const usuario = findUsuarioByEmail(email);
 
       if (!usuario) {
         toast({
@@ -69,41 +58,21 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
           description: "Não encontramos nenhuma conta com este e-mail.",
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
       // Gerar código de 6 dígitos
       const codigoRecuperacao = Math.floor(100000 + Math.random() * 900000).toString();
+      setCodigoGerado(codigoRecuperacao);
+      setUsuarioEncontrado(usuario);
       
-      // Salvar código no banco (válido por 30 minutos)
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 30);
-
-      const { error: insertError } = await supabase
-        .from('codigos_recuperacao')
-        .insert({
-          usuario_id: usuario.id,
-          codigo: codigoRecuperacao,
-          email_pessoal: email,
-          expires_at: expiresAt.toISOString()
-        });
-
-      if (insertError) {
-        console.error('Erro ao salvar código:', insertError);
-        toast({
-          title: "Erro",
-          description: "Erro ao gerar código de recuperação. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // TODO: Aqui você implementará o envio de e-mail com o código
+      // Em um sistema real, aqui você enviaria o código por e-mail
       console.log(`Código de recuperação para ${email}: ${codigoRecuperacao}`);
       
       toast({
         title: "Código enviado!",
-        description: `Um código de recuperação foi enviado para ${email}`,
+        description: `Um código de recuperação foi enviado para ${email}. (Código: ${codigoRecuperacao})`,
       });
 
       setStep('code');
@@ -135,32 +104,13 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
     setLoading(true);
 
     try {
-      // Verificar se o código é válido e não expirou
-      const { data: codigoData, error: codigoError } = await supabase
-        .from('codigos_recuperacao')
-        .select('*')
-        .eq('codigo', codigo)
-        .eq('email_pessoal', email)
-        .eq('usado', false)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-
-      if (codigoError) {
-        console.error('Erro ao verificar código:', codigoError);
-        toast({
-          title: "Erro",
-          description: "Erro ao verificar código. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (!codigoData) {
+      if (codigo !== codigoGerado) {
         toast({
           title: "Código inválido",
-          description: "Código inválido ou expirado. Solicite um novo código.",
+          description: "Código inválido. Verifique e tente novamente.",
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
@@ -216,17 +166,7 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
     setLoading(true);
 
     try {
-      // Buscar o código válido
-      const { data: codigoData, error: codigoError } = await supabase
-        .from('codigos_recuperacao')
-        .select('usuario_id')
-        .eq('codigo', codigo)
-        .eq('email_pessoal', email)
-        .eq('usado', false)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-
-      if (codigoError || !codigoData) {
+      if (!usuarioEncontrado) {
         toast({
           title: "Erro",
           description: "Sessão expirada. Inicie o processo novamente.",
@@ -237,31 +177,10 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
       }
 
       // Hash da nova senha
-      const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.hash(novaSenha, 12);
+      const hashedPassword = await hashPassword(novaSenha);
 
       // Atualizar senha do usuário
-      const { error: updateError } = await supabase
-        .from('usuarios')
-        .update({ senha: hashedPassword })
-        .eq('id', codigoData.usuario_id);
-
-      if (updateError) {
-        console.error('Erro ao atualizar senha:', updateError);
-        toast({
-          title: "Erro",
-          description: "Erro ao atualizar senha. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Marcar código como usado
-      await supabase
-        .from('codigos_recuperacao')
-        .update({ usado: true })
-        .eq('codigo', codigo)
-        .eq('email_pessoal', email);
+      updateUsuario(usuarioEncontrado.id, { senha: hashedPassword });
 
       setStep('success');
 
@@ -335,6 +254,9 @@ const RecuperarSenha = ({ onVoltar }: RecuperarSenhaProps) => {
                 />
                 <p className="text-xs text-gray-500">
                   Código enviado para: {email}
+                </p>
+                <p className="text-xs text-blue-600">
+                  Código para teste: {codigoGerado}
                 </p>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

@@ -1,4 +1,3 @@
-
 import { Usuario, Interessado } from '../types';
 
 const STORAGE_KEYS = {
@@ -80,6 +79,11 @@ export const deleteUsuario = (id: string) => {
 export const findUsuarioByApelido = (apelido: string): Usuario | null => {
   const usuarios = getUsuarios();
   return usuarios.find(u => u.apelido === apelido) || null;
+};
+
+export const findUsuarioByEmail = (email: string): Usuario | null => {
+  const usuarios = getUsuarios();
+  return usuarios.find(user => user.email_pessoal === email) || null;
 };
 
 // Interessado operations
