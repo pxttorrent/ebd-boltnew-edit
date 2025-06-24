@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ import * as XLSX from 'xlsx';
 import CadastroInstrutorInline from '../components/CadastroInstrutorInline';
 
 export default function ListaInteressados() {
-  const { interessados, deleteInteressado, usuarios } = useApp();
+  const { interessados, deleteInteressado, usuarios, currentUser } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -48,21 +48,43 @@ export default function ListaInteressados() {
     { key: 'observacoes', label: 'Observações', selected: false }
   ]);
 
-  // Filtrar interessados
-  const filteredInteressados = interessados.filter(interessado => {
-    const matchesSearch = interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      interessado.telefone.includes(searchTerm) ||
-      interessado.cidade.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'todos' || interessado.status === statusFilter;
-    
-    const matchesCidade = cidadeFilter === 'todas' || interessado.cidade === cidadeFilter;
-    
-    return matchesSearch && matchesStatus && matchesCidade;
-  });
+  // Filtrar interessados baseado no tipo de usuário
+  const filteredInteressados = useMemo(() => {
+    let baseInteressados = interessados;
 
-  // Obter cidades únicas
-  const cidadesUnicas = [...new Set(interessados.map(i => i.cidade))].sort();
+    // Se for missionário, mostrar apenas interessados que ele cadastrou
+    if (currentUser?.tipo === 'missionario') {
+      baseInteressados = interessados.filter(interessado => 
+        interessado.instrutor_biblico === currentUser.nome_completo
+      );
+    }
+
+    return baseInteressados.filter(interessado => {
+      const matchesSearch = interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        interessado.telefone.includes(searchTerm) ||
+        interessado.cidade.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'todos' || interessado.status === statusFilter;
+      
+      const matchesCidade = cidadeFilter === 'todas' || interessado.cidade === cidadeFilter;
+      
+      return matchesSearch && matchesStatus && matchesCidade;
+    });
+  }, [interessados, currentUser, searchTerm, statusFilter, cidadeFilter]);
+
+  // Obter cidades únicas baseado nos interessados visíveis
+  const cidadesUnicas = useMemo(() => {
+    let baseInteressados = interessados;
+    
+    // Se for missionário, considerar apenas interessados que ele cadastrou
+    if (currentUser?.tipo === 'missionario') {
+      baseInteressados = interessados.filter(interessado => 
+        interessado.instrutor_biblico === currentUser.nome_completo
+      );
+    }
+    
+    return [...new Set(baseInteressados.map(i => i.cidade))].sort();
+  }, [interessados, currentUser]);
 
   const handleDelete = (id: string, nome: string) => {
     if (window.confirm(`Tem certeza que deseja excluir ${nome}?`)) {
@@ -338,6 +360,9 @@ export default function ListaInteressados() {
             {/* Resumo dos filtros */}
             <div className="mt-4 text-sm text-gray-600">
               Mostrando {filteredInteressados.length} de {interessados.length} interessados
+              {currentUser?.tipo === 'missionario' && (
+                <span className="text-blue-600 font-medium"> (seus cadastros)</span>
+              )}
             </div>
           </div>
 
@@ -348,7 +373,9 @@ export default function ListaInteressados() {
                 <p className="text-gray-500 text-lg">
                   {searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas' 
                     ? 'Nenhum interessado encontrado com os critérios de busca.' 
-                    : 'Nenhum interessado cadastrado ainda.'}
+                    : currentUser?.tipo === 'missionario' 
+                      ? 'Você ainda não cadastrou nenhum interessado.'
+                      : 'Nenhum interessado cadastrado ainda.'}
                 </p>
               </div>
             ) : (
