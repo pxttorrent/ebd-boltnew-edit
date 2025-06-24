@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Usuario, Interessado } from '../types';
+import { Usuario, Interessado, Igreja } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -11,6 +11,10 @@ import {
   addInteressado as addInteressadoToStorage,
   updateInteressado as updateInteressadoInStorage,
   deleteInteressado as deleteInteressadoFromStorage,
+  getIgrejas,
+  addIgreja as addIgrejaToStorage,
+  updateIgreja as updateIgrejaInStorage,
+  deleteIgreja as deleteIgrejaFromStorage,
   getCurrentUser
 } from '../services/localStorage';
 
@@ -29,6 +33,12 @@ interface AppContextType {
   updateInteressado: (id: string, updates: Partial<Interessado>) => Promise<void>;
   deleteInteressado: (id: string) => Promise<void>;
 
+  // Igreja management
+  igrejas: Igreja[];
+  addIgreja: (igreja: Omit<Igreja, 'id'>) => Promise<void>;
+  updateIgreja: (id: string, updates: Partial<Igreja>) => Promise<void>;
+  deleteIgreja: (id: string) => Promise<void>;
+
   // Loading states
   loading: boolean;
   refreshData: () => Promise<void>;
@@ -39,6 +49,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [interessados, setInteressados] = useState<Interessado[]>([]);
+  const [igrejas, setIgrejas] = useState<Igreja[]>([]);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -51,6 +62,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else {
       setUsuarios([]);
       setInteressados([]);
+      setIgrejas([]);
       setCurrentUser(null);
       setLoading(false);
     }
@@ -77,6 +89,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Load interessados
       const interessadosData = getInteressados();
       setInteressados(interessadosData);
+
+      // Load igrejas
+      const igrejasData = getIgrejas();
+      setIgrejas(igrejasData);
 
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -250,6 +266,81 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Igreja operations
+  const addIgreja = async (igreja: Omit<Igreja, 'id'>) => {
+    try {
+      const newIgreja = addIgrejaToStorage(igreja);
+      setIgrejas(prev => [...prev, newIgreja]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Igreja adicionada com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error adding igreja:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao adicionar igreja",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const updateIgreja = async (id: string, updates: Partial<Igreja>) => {
+    try {
+      updateIgrejaInStorage(id, updates);
+      
+      setIgrejas(prev => 
+        prev.map(igreja => 
+          igreja.id === id ? { ...igreja, ...updates } : igreja
+        )
+      );
+
+      toast({
+        title: "Sucesso!",
+        description: "Igreja atualizada com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error updating igreja:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar igreja",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteIgreja = async (id: string) => {
+    try {
+      // Verificar se há usuários ou interessados vinculados a esta igreja
+      const igrejaNome = igrejas.find(i => i.id === id)?.nome;
+      const usuariosVinculados = usuarios.filter(u => u.igreja === igrejaNome);
+      const interessadosVinculados = interessados.filter(i => i.igreja === igrejaNome || i.cidade === igrejaNome);
+
+      if (usuariosVinculados.length > 0 || interessadosVinculados.length > 0) {
+        throw new Error(`Não é possível excluir a igreja "${igrejaNome}" pois há ${usuariosVinculados.length} usuário(s) e ${interessadosVinculados.length} interessado(s) vinculados a ela. Desative a igreja ao invés de excluí-la.`);
+      }
+
+      deleteIgrejaFromStorage(id);
+      setIgrejas(prev => prev.filter(igreja => igreja.id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Igreja excluída com sucesso."
+      });
+    } catch (error: any) {
+      console.error('Error deleting igreja:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir igreja",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       usuarios,
@@ -262,6 +353,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addInteressado,
       updateInteressado,
       deleteInteressado,
+      igrejas,
+      addIgreja,
+      updateIgreja,
+      deleteIgreja,
       loading,
       refreshData
     }}>

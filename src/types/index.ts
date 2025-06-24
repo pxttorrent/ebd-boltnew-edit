@@ -1,4 +1,3 @@
-
 export interface Usuario {
   id: string;
   nome_completo: string;
@@ -6,7 +5,7 @@ export interface Usuario {
   login_acesso: string;
   senha: string;
   email_pessoal?: string;
-  igreja: 'Armour' | 'Dom Pedrito' | 'Quaraí' | 'Santana do Livramento' | 'Argeni' | 'Parque São José';
+  igreja: string;
   aprovado: boolean;
   foto_perfil?: string;
   tipo: 'administrador' | 'missionario';
@@ -26,13 +25,21 @@ export interface Interessado {
   telefone: string;
   endereco?: string;
   cidade: string;
-  igreja?: string; // Nova propriedade opcional
+  igreja?: string;
   status: 'A' | 'B' | 'C' | 'D' | 'E';
   instrutor_biblico: string;
   data_contato: string;
   observacoes?: string;
   frequenta_cultos?: string;
   estudo_biblico?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Igreja {
+  id: string;
+  nome: string;
+  ativa: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -52,15 +59,6 @@ export const StatusColors = {
   'D': 'bg-purple-100 text-purple-800',
   'E': 'bg-gray-100 text-gray-800'
 };
-
-export const IgrejaOptions = [
-  'Armour',
-  'Dom Pedrito',
-  'Quaraí',
-  'Santana do Livramento',
-  'Argeni',
-  'Parque São José'
-] as const;
 
 export const TipoUsuarioLabels = {
   'administrador': 'Administrador',

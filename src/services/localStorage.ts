@@ -1,8 +1,9 @@
-import { Usuario, Interessado } from '../types';
+import { Usuario, Interessado, Igreja } from '../types';
 
 const STORAGE_KEYS = {
   USUARIOS: 'escola_biblica_usuarios',
   INTERESSADOS: 'escola_biblica_interessados',
+  IGREJAS: 'escola_biblica_igrejas',
   CURRENT_USER: 'escola_biblica_current_user'
 };
 
@@ -16,7 +17,7 @@ const INITIAL_DATA = {
       login_acesso: 'admin@escola-biblica.app',
       senha: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
       email_pessoal: 'admin@exemplo.com',
-      igreja: 'Matriz' as Usuario['igreja'],
+      igreja: 'Matriz',
       tipo: 'administrador' as Usuario['tipo'],
       foto_perfil: null,
       aprovado: true,
@@ -28,7 +29,15 @@ const INITIAL_DATA = {
       }
     }
   ] as Usuario[],
-  interessados: [] as Interessado[]
+  interessados: [] as Interessado[],
+  igrejas: [
+    { id: '1', nome: 'Armour', ativa: true },
+    { id: '2', nome: 'Dom Pedrito', ativa: true },
+    { id: '3', nome: 'Quaraí', ativa: true },
+    { id: '4', nome: 'Santana do Livramento', ativa: true },
+    { id: '5', nome: 'Argeni', ativa: true },
+    { id: '6', nome: 'Parque São José', ativa: true }
+  ] as Igreja[]
 };
 
 // Initialize storage with default data if empty
@@ -38,6 +47,9 @@ export const initializeStorage = () => {
   }
   if (!localStorage.getItem(STORAGE_KEYS.INTERESSADOS)) {
     localStorage.setItem(STORAGE_KEYS.INTERESSADOS, JSON.stringify(INITIAL_DATA.interessados));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.IGREJAS)) {
+    localStorage.setItem(STORAGE_KEYS.IGREJAS, JSON.stringify(INITIAL_DATA.igrejas));
   }
 };
 
@@ -119,6 +131,50 @@ export const updateInteressado = (id: string, updates: Partial<Interessado>) => 
 export const deleteInteressado = (id: string) => {
   const interessados = getInteressados().filter(i => i.id !== id);
   saveInteressados(interessados);
+};
+
+// Igreja operations
+export const getIgrejas = (): Igreja[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.IGREJAS);
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveIgrejas = (igrejas: Igreja[]) => {
+  localStorage.setItem(STORAGE_KEYS.IGREJAS, JSON.stringify(igrejas));
+};
+
+export const addIgreja = (igreja: Omit<Igreja, 'id'>): Igreja => {
+  const igrejas = getIgrejas();
+  const newIgreja: Igreja = {
+    ...igreja,
+    id: Date.now().toString(),
+    created_at: new Date().toISOString()
+  };
+  igrejas.push(newIgreja);
+  saveIgrejas(igrejas);
+  return newIgreja;
+};
+
+export const updateIgreja = (id: string, updates: Partial<Igreja>) => {
+  const igrejas = getIgrejas();
+  const index = igrejas.findIndex(i => i.id === id);
+  if (index !== -1) {
+    igrejas[index] = { 
+      ...igrejas[index], 
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    saveIgrejas(igrejas);
+  }
+};
+
+export const deleteIgreja = (id: string) => {
+  const igrejas = getIgrejas().filter(i => i.id !== id);
+  saveIgrejas(igrejas);
+};
+
+export const getIgrejasAtivas = (): Igreja[] => {
+  return getIgrejas().filter(igreja => igreja.ativa);
 };
 
 // Current user operations

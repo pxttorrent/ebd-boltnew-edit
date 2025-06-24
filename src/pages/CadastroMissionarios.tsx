@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Usuario, IgrejaOptions } from '../types';
+import { Usuario } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle, Upload, X, Shield, User, Lock } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
@@ -18,7 +17,7 @@ import EditarMissionario from '../components/EditarMissionario';
 import FotoCropper from '../components/FotoCropper';
 
 export default function CadastroMissionarios() {
-  const { usuarios, currentUser, updateUsuario, deleteUsuario, refreshData } = useApp();
+  const { usuarios, currentUser, updateUsuario, deleteUsuario, refreshData, igrejas } = useApp();
   const { toast } = useToast();
   
   // Todos os hooks devem estar no topo, antes de qualquer retorno condicional
@@ -27,7 +26,7 @@ export default function CadastroMissionarios() {
     apelido: '',
     senha: '',
     email_pessoal: '',
-    igreja: '' as Usuario['igreja'] | '',
+    igreja: '',
     tipo: 'missionario' as Usuario['tipo'],
     foto_perfil: ''
   });
@@ -37,6 +36,9 @@ export default function CadastroMissionarios() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState('');
+
+  // Obter igrejas ativas para o select
+  const igrejasAtivas = igrejas.filter(igreja => igreja.ativa);
 
   // Verificar se o usuário atual é administrador APÓS todos os hooks
   const isAdmin = currentUser?.tipo === 'administrador';
@@ -78,7 +80,7 @@ export default function CadastroMissionarios() {
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
-    setFormData({ ...formData, nome_completo: capitalizedName });
+    setFormData(prev => ({ ...prev, nome_completo: capitalizedName }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +192,7 @@ export default function CadastroMissionarios() {
         apelido: '',
         senha: '',
         email_pessoal: '',
-        igreja: '' as Usuario['igreja'] | '',
+        igreja: '',
         tipo: 'missionario' as Usuario['tipo'],
         foto_perfil: ''
       });
@@ -319,7 +321,7 @@ export default function CadastroMissionarios() {
                 <Input
                   id="apelido"
                   value={formData.apelido}
-                  onChange={(e) => setFormData({ ...formData, apelido: e.target.value.toLowerCase() })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
                   placeholder="Ex: joao.silva"
                   required
                   disabled={loading}
@@ -334,7 +336,7 @@ export default function CadastroMissionarios() {
                   id="email_pessoal"
                   type="email"
                   value={formData.email_pessoal}
-                  onChange={(e) => setFormData({ ...formData, email_pessoal: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email_pessoal: e.target.value }))}
                   placeholder="seu.email@exemplo.com"
                   required
                   disabled={loading}
@@ -365,7 +367,7 @@ export default function CadastroMissionarios() {
                   id="senha"
                   type="password"
                   value={formData.senha}
-                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
                   placeholder="Digite a senha"
                   required
                   disabled={loading}
@@ -378,7 +380,7 @@ export default function CadastroMissionarios() {
                 </Label>
                 <Select 
                   value={formData.tipo} 
-                  onValueChange={(value) => setFormData({ ...formData, tipo: value as Usuario['tipo'] })}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value as Usuario['tipo'] }))}
                   disabled={loading}
                 >
                   <SelectTrigger>
@@ -410,16 +412,16 @@ export default function CadastroMissionarios() {
                 </Label>
                 <Select 
                   value={formData.igreja} 
-                  onValueChange={(value) => setFormData({ ...formData, igreja: value as Usuario['igreja'] })}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, igreja: value }))}
                   disabled={loading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a igreja" />
                   </SelectTrigger>
                   <SelectContent>
-                    {IgrejaOptions.map((igreja) => (
-                      <SelectItem key={igreja} value={igreja}>
-                        {igreja}
+                    {igrejasAtivas.map((igreja) => (
+                      <SelectItem key={igreja.id} value={igreja.nome}>
+                        {igreja.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>

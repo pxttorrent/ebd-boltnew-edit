@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Interessado, StatusLabels, IgrejaOptions } from '../types';
+import { Interessado, StatusLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { capitalizeWords } from '../utils/textUtils';
 import { formatPhone } from '../utils/phoneUtils';
 
 export default function CadastrarInteressado() {
-  const { usuarios, addInteressado, currentUser } = useApp();
+  const { usuarios, addInteressado, currentUser, igrejas } = useApp();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -29,6 +28,9 @@ export default function CadastrarInteressado() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Obter igrejas ativas para o select
+  const igrejasAtivas = igrejas.filter(igreja => igreja.ativa);
 
   const handleNomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const capitalizedName = capitalizeWords(e.target.value);
@@ -174,9 +176,9 @@ export default function CadastrarInteressado() {
                     <SelectValue placeholder="Selecione a igreja" />
                   </SelectTrigger>
                   <SelectContent>
-                    {IgrejaOptions.map((cidade) => (
-                      <SelectItem key={cidade} value={cidade}>
-                        {cidade}
+                    {igrejasAtivas.map((igreja) => (
+                      <SelectItem key={igreja.id} value={igreja.nome}>
+                        {igreja.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
