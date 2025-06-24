@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Usuario, TipoUsuarioLabels } from '../types';
+import { Usuario, TipoUsuarioLabels, IgrejaOptions } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User } from 'lucide-react';
 import EditarMissionario from '../components/EditarMissionario';
@@ -91,6 +90,34 @@ export default function Configuracoes() {
       toast({
         title: "Erro",
         description: "Erro ao atualizar aprovação do usuário.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleIgrejaChange = async (userId: string, igreja: Usuario['igreja']) => {
+    try {
+      // Update immediately in context
+      await updateUsuario(userId, { igreja });
+      
+      // Update local state
+      setLocalUsuarios(prev => 
+        prev.map(usuario => 
+          usuario.id === userId 
+            ? { ...usuario, igreja }
+            : usuario
+        )
+      );
+      
+      toast({
+        title: "Igreja Atualizada!",
+        description: `${localUsuarios.find(u => u.id === userId)?.nome_completo} foi transferido para ${igreja}.`
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar igreja:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar igreja do usuário.",
         variant: "destructive"
       });
     }
@@ -255,7 +282,23 @@ export default function Configuracoes() {
                             <p className="text-sm text-gray-500">{usuario.login_acesso}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{usuario.igreja}</TableCell>
+                        <TableCell>
+                          <Select 
+                            value={usuario.igreja} 
+                            onValueChange={(value) => handleIgrejaChange(usuario.id, value as Usuario['igreja'])}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {IgrejaOptions.map((igreja) => (
+                                <SelectItem key={igreja} value={igreja}>
+                                  {igreja}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                         <TableCell className="text-center">
                           <Select 
                             value={usuario.tipo} 
@@ -363,7 +406,23 @@ export default function Configuracoes() {
                             <p className="text-sm text-gray-500">{usuario.login_acesso}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{usuario.igreja}</TableCell>
+                        <TableCell>
+                          <Select 
+                            value={usuario.igreja} 
+                            onValueChange={(value) => handleIgrejaChange(usuario.id, value as Usuario['igreja'])}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {IgrejaOptions.map((igreja) => (
+                                <SelectItem key={igreja} value={igreja}>
+                                  {igreja}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                         <TableCell className="text-center">
                           <Select 
                             value={usuario.tipo} 
