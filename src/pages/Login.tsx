@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useApp } from '../context/AppContext';
 import { signInWithSupabase, signUpWithSupabase, ensureInitialChurches } from '../services/supabaseService';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, User, Shield, Eye, EyeOff, AlertCircle, RefreshCw } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, AlertCircle, RefreshCw } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { Igreja } from '../types';
 
@@ -37,8 +37,7 @@ export default function Login() {
     apelido: '',
     senha: '',
     confirmarSenha: '',
-    igreja: '',
-    tipo: 'missionario' as 'administrador' | 'missionario'
+    igreja: ''
   });
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -262,7 +261,7 @@ export default function Login() {
     if (!apelidoRegex.test(signupData.apelido)) {
       toast({
         title: "Erro",
-        description: "O login deve conter apenas letras minúsculas, números e pontos.",
+        description: "O acesso deve conter apenas letras minúsculas, números e pontos.",
         variant: "destructive"
       });
       return;
@@ -276,7 +275,8 @@ export default function Login() {
       const result = await signUpWithSupabase({
         ...signupData,
         login_acesso,
-        email_pessoal: '' // E-mail vazio por padrão
+        email_pessoal: '', // E-mail vazio por padrão
+        tipo: 'missionario' // Sempre missionário por padrão
       });
       
       if (result.error) {
@@ -299,8 +299,7 @@ export default function Login() {
         apelido: '',
         senha: '',
         confirmarSenha: '',
-        igreja: '',
-        tipo: 'missionario'
+        igreja: ''
       });
 
     } catch (error: any) {
@@ -351,13 +350,13 @@ export default function Login() {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <Label htmlFor="login-apelido">Login</Label>
+                    <Label htmlFor="login-apelido">Acesso</Label>
                     <Input
                       id="login-apelido"
                       type="text"
                       value={loginData.apelido}
                       onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
-                      placeholder="seu.login"
+                      placeholder="nome.sobrenome"
                       required
                       disabled={isLoggingIn}
                     />
@@ -415,13 +414,13 @@ export default function Login() {
                   </div>
 
                   <div>
-                    <Label htmlFor="signup-apelido">Login *</Label>
+                    <Label htmlFor="signup-apelido">Acesso *</Label>
                     <Input
                       id="signup-apelido"
                       type="text"
                       value={signupData.apelido}
                       onChange={(e) => setSignupData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
-                      placeholder="seu.login"
+                      placeholder="nome.sobrenome"
                       required
                       disabled={isSigningUp}
                     />
@@ -473,25 +472,6 @@ export default function Login() {
                         )}
                       </select>
                     )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="signup-tipo">Tipo de Usuário *</Label>
-                    <select
-                      id="signup-tipo"
-                      value={signupData.tipo}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, tipo: e.target.value as 'administrador' | 'missionario' }))}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      required
-                      disabled={isSigningUp}
-                    >
-                      <option value="missionario">
-                        Missionário
-                      </option>
-                      <option value="administrador">
-                        Administrador
-                      </option>
-                    </select>
                   </div>
 
                   <div>
