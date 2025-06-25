@@ -322,9 +322,8 @@ export default function BoasVindas() {
                       className={`bg-gradient-to-br ${statusColors[item.status as keyof typeof statusColors]} rounded-lg p-4 text-white hover:shadow-lg transition-shadow`}
                     >
                       <div className="text-center">
-                        <div className="text-2xl font-bold mb-1">{item.quantidade}</div>
-                        <div className="text-sm font-medium mb-1">Status {item.status}</div>
-                        <div className="text-xs opacity-90 leading-tight">{item.label}</div>
+                        <div className="text-2xl font-bold mb-2">{item.quantidade}</div>
+                        <div className="text-sm font-medium leading-tight">{item.label}</div>
                       </div>
                     </div>
                   ))}
