@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '../context/AppContext';
-import { signInWithSupabase, signUpWithSupabase } from '../services/supabaseService';
+import { signInWithSupabase, signUpWithSupabase, ensureInitialChurches } from '../services/supabaseService';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, User, Shield, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { BookOpen, User, Shield, Eye, EyeOff, AlertCircle, RefreshCw } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { Igreja } from '../types';
 
@@ -46,78 +46,135 @@ export default function Login() {
 
   // Carregar igrejas ao montar o componente
   useEffect(() => {
-    const loadIgrejas = async () => {
-      try {
-        console.log('🏛️ Iniciando carregamento de igrejas...');
-        setLoadingIgrejas(true);
-        setErrorIgrejas(null);
+    loadIgrejas();
+  }, []);
 
-        // Fazer consulta direta ao Supabase
-        const { data: igrejasData, error } = await supabase
+  const loadIgrejas = async () => {
+    try {
+      console.log('🏛️ Iniciando carregamento de igrejas...');
+      setLoadingIgrejas(true);
+      setErrorIgrejas(null);
+
+      // Primeiro, garantir que as igrejas iniciais existam
+      console.log('🔧 Garantindo que igrejas iniciais existam...');
+      await ensureInitialChurches();
+
+      // Fazer consulta direta ao Supabase
+      const { data: igrejasData, error } = await supabase
+        .from('igrejas')
+        .select('*')
+        .order('nome');
+
+      console.log('📊 Resultado da consulta de igrejas:', {
+        data: igrejasData,
+        error: error,
+        count: igrejasData?.length || 0
+      });
+
+      if (error) {
+        console.error('❌ Erro na consulta de igrejas:', error);
+        setErrorIgrejas(`Erro ao carregar igrejas: ${error.message}`);
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar igrejas: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!igrejasData || igrejasData.length === 0) {
+        console.warn('⚠️ Nenhuma igreja encontrada no banco de dados');
+        setErrorIgrejas('Nenhuma igreja encontrada. Tentando criar igrejas iniciais...');
+        
+        // Tentar inserir igrejas manualmente
+        console.log('🔧 Tentando inserir igrejas manualmente...');
+        const igrejasIniciais = [
+          'Armour',
+          'Dom Pedrito', 
+          'Quaraí',
+          'Santana do Livramento',
+          'Argeni',
+          'Parque São José'
+        ];
+
+        const { data: insertedChurches, error: insertError } = await supabase
+          .from('igrejas')
+          .insert(
+            igrejasIniciais.map(nome => ({
+              nome,
+              ativa: true
+            }))
+          )
+          .select();
+
+        if (insertError) {
+          console.error('❌ Erro ao inserir igrejas:', insertError);
+          setErrorIgrejas(`Erro ao criar igrejas: ${insertError.message}`);
+          return;
+        }
+
+        console.log('✅ Igrejas inseridas manualmente:', insertedChurches);
+        
+        // Recarregar após inserção
+        const { data: reloadedChurches } = await supabase
           .from('igrejas')
           .select('*')
           .order('nome');
-
-        console.log('📊 Resultado da consulta de igrejas:', {
-          data: igrejasData,
-          error: error,
-          count: igrejasData?.length || 0
-        });
-
-        if (error) {
-          console.error('❌ Erro na consulta de igrejas:', error);
-          setErrorIgrejas(`Erro ao carregar igrejas: ${error.message}`);
+        
+        if (reloadedChurches && reloadedChurches.length > 0) {
+          const igrejasFormatadas: Igreja[] = reloadedChurches.map(igreja => ({
+            id: igreja.id,
+            nome: igreja.nome,
+            ativa: igreja.ativa,
+            created_at: igreja.created_at,
+            updated_at: igreja.updated_at
+          }));
+          
+          setIgrejas(igrejasFormatadas);
+          setErrorIgrejas(null);
+          
           toast({
-            title: "Erro",
-            description: `Erro ao carregar igrejas: ${error.message}`,
-            variant: "destructive"
+            title: "Sucesso!",
+            description: "Igrejas criadas e carregadas com sucesso."
           });
-          return;
         }
-
-        if (!igrejasData || igrejasData.length === 0) {
-          console.warn('⚠️ Nenhuma igreja encontrada no banco de dados');
-          setErrorIgrejas('Nenhuma igreja encontrada no banco de dados');
-          setIgrejas([]);
-          return;
-        }
-
-        // Converter para o tipo Igreja
-        const igrejasFormatadas: Igreja[] = igrejasData.map(igreja => ({
-          id: igreja.id,
-          nome: igreja.nome,
-          ativa: igreja.ativa,
-          created_at: igreja.created_at,
-          updated_at: igreja.updated_at
-        }));
-
-        console.log('✅ Igrejas formatadas:', igrejasFormatadas);
-        console.log('🏛️ Igrejas ativas:', igrejasFormatadas.filter(i => i.ativa));
-
-        setIgrejas(igrejasFormatadas);
-
-        // Verificar se há igrejas ativas
-        const igrejasAtivas = igrejasFormatadas.filter(igreja => igreja.ativa);
-        if (igrejasAtivas.length === 0) {
-          console.warn('⚠️ Nenhuma igreja ativa encontrada');
-          setErrorIgrejas('Nenhuma igreja está ativa no momento');
-        }
-
-      } catch (error: any) {
-        console.error('💥 Erro inesperado ao carregar igrejas:', error);
-        setErrorIgrejas(`Erro inesperado: ${error.message}`);
-        toast({
-          title: "Erro",
-          description: "Erro inesperado ao carregar igrejas. Tente recarregar a página.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoadingIgrejas(false);
+        
+        return;
       }
-    };
 
-    loadIgrejas();
-  }, [toast]);
+      // Converter para o tipo Igreja
+      const igrejasFormatadas: Igreja[] = igrejasData.map(igreja => ({
+        id: igreja.id,
+        nome: igreja.nome,
+        ativa: igreja.ativa,
+        created_at: igreja.created_at,
+        updated_at: igreja.updated_at
+      }));
+
+      console.log('✅ Igrejas formatadas:', igrejasFormatadas);
+      console.log('🏛️ Igrejas ativas:', igrejasFormatadas.filter(i => i.ativa));
+
+      setIgrejas(igrejasFormatadas);
+
+      // Verificar se há igrejas ativas
+      const igrejasAtivas = igrejasFormatadas.filter(igreja => igreja.ativa);
+      if (igrejasAtivas.length === 0) {
+        console.warn('⚠️ Nenhuma igreja ativa encontrada');
+        setErrorIgrejas('Nenhuma igreja está ativa no momento');
+      }
+
+    } catch (error: any) {
+      console.error('💥 Erro inesperado ao carregar igrejas:', error);
+      setErrorIgrejas(`Erro inesperado: ${error.message}`);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar igrejas. Tente recarregar a página.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingIgrejas(false);
+    }
+  };
 
   // Obter igrejas ativas para o select
   const igrejasAtivas = igrejas.filter(igreja => igreja.ativa);
@@ -264,7 +321,7 @@ export default function Login() {
   };
 
   const handleReloadIgrejas = () => {
-    window.location.reload();
+    loadIgrejas();
   };
 
   return (
@@ -385,17 +442,19 @@ export default function Login() {
                       </div>
                     ) : errorIgrejas ? (
                       <div className="space-y-2">
-                        <div className="flex h-10 w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm items-center text-red-700">
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          {errorIgrejas}
+                        <div className="flex h-auto min-h-[40px] w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm items-center text-red-700">
+                          <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="flex-1">{errorIgrejas}</span>
                         </div>
                         <Button
                           type="button"
                           onClick={handleReloadIgrejas}
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                          className="w-full flex items-center gap-2"
+                          disabled={loadingIgrejas}
                         >
+                          <RefreshCw className={`h-4 w-4 ${loadingIgrejas ? 'animate-spin' : ''}`} />
                           Tentar Novamente
                         </Button>
                       </div>

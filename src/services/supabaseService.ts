@@ -196,6 +196,61 @@ export const signOutFromSupabase = async () => {
   window.location.href = '/'
 }
 
+// Função para inserir igrejas iniciais se não existirem
+export const ensureInitialChurches = async () => {
+  try {
+    console.log('🏛️ Verificando se existem igrejas no banco...')
+    
+    // Verificar se já existem igrejas
+    const { data: existingChurches, error: checkError } = await supabase
+      .from('igrejas')
+      .select('id, nome')
+      .limit(1)
+
+    if (checkError) {
+      console.error('❌ Erro ao verificar igrejas:', checkError)
+      return
+    }
+
+    if (existingChurches && existingChurches.length > 0) {
+      console.log('✅ Igrejas já existem no banco de dados')
+      return
+    }
+
+    console.log('📝 Inserindo igrejas iniciais...')
+    
+    // Inserir igrejas iniciais
+    const igrejasIniciais = [
+      'Armour',
+      'Dom Pedrito', 
+      'Quaraí',
+      'Santana do Livramento',
+      'Argeni',
+      'Parque São José'
+    ]
+
+    const { data: insertedChurches, error: insertError } = await supabase
+      .from('igrejas')
+      .insert(
+        igrejasIniciais.map(nome => ({
+          nome,
+          ativa: true
+        }))
+      )
+      .select()
+
+    if (insertError) {
+      console.error('❌ Erro ao inserir igrejas:', insertError)
+      return
+    }
+
+    console.log('✅ Igrejas inseridas com sucesso:', insertedChurches?.length)
+    
+  } catch (error) {
+    console.error('💥 Erro ao garantir igrejas iniciais:', error)
+  }
+}
+
 // Usuario operations
 export const fetchUsuarios = async (): Promise<Usuario[]> => {
   try {
@@ -536,6 +591,9 @@ export const deleteInteressado = async (id: string) => {
 export const fetchIgrejas = async (): Promise<Igreja[]> => {
   try {
     console.log('📥 Buscando igrejas do Supabase...')
+    
+    // Garantir que as igrejas iniciais existam
+    await ensureInitialChurches()
     
     const { data: igrejas, error } = await supabase
       .from('igrejas')
