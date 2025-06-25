@@ -3,11 +3,37 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+console.log('🔧 Configuração Supabase:', {
+  url: supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  keyLength: supabaseAnonKey?.length
+})
+
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Variáveis de ambiente do Supabase não encontradas:', {
+    VITE_SUPABASE_URL: supabaseUrl,
+    VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'Presente' : 'Ausente'
+  })
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false // Desabilitar sessão automática do Supabase Auth
+  }
+})
+
+// Test connection
+supabase
+  .from('igrejas')
+  .select('count', { count: 'exact', head: true })
+  .then(({ count, error }) => {
+    if (error) {
+      console.error('❌ Erro ao conectar com Supabase:', error)
+    } else {
+      console.log('✅ Conexão com Supabase estabelecida. Igrejas encontradas:', count)
+    }
+  })
 
 // Types for database tables
 export interface Database {

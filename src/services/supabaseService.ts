@@ -99,7 +99,7 @@ export const signInWithSupabase = async (apelido: string, senha: string) => {
 
 export const signUpWithSupabase = async (userData: any) => {
   try {
-    console.log('Starting signup process with data:', userData)
+    console.log('🚀 Iniciando processo de cadastro:', userData.nome_completo)
     
     // Validar dados obrigatórios
     if (!userData.nome_completo || !userData.apelido || !userData.senha || !userData.email_pessoal || !userData.igreja) {
@@ -130,20 +130,37 @@ export const signUpWithSupabase = async (userData: any) => {
     }
 
     // Get igreja_id
+    console.log('🏛️ Buscando igreja:', userData.igreja)
     const { data: igreja, error: igrejaError } = await supabase
       .from('igrejas')
-      .select('id')
+      .select('id, nome')
       .eq('nome', userData.igreja)
       .maybeSingle()
 
-    if (igrejaError || !igreja) {
-      return { error: 'Igreja não encontrada' }
+    console.log('📍 Resultado da busca da igreja:', { igreja, igrejaError })
+
+    if (igrejaError) {
+      console.error('❌ Erro ao buscar igreja:', igrejaError)
+      return { error: 'Erro ao buscar igreja: ' + igrejaError.message }
+    }
+
+    if (!igreja) {
+      // Listar igrejas disponíveis para debug
+      const { data: igrejasDisponiveis } = await supabase
+        .from('igrejas')
+        .select('nome')
+        .eq('ativa', true)
+      
+      console.log('🏛️ Igrejas disponíveis:', igrejasDisponiveis)
+      return { error: `Igreja "${userData.igreja}" não encontrada. Igrejas disponíveis: ${igrejasDisponiveis?.map(i => i.nome).join(', ')}` }
     }
 
     // Hash the password
+    console.log('🔐 Gerando hash da senha...')
     const hashedPassword = await hashPassword(userData.senha)
     
     // Create new user
+    console.log('👤 Criando novo usuário...')
     const { data: newUser, error: insertError } = await supabase
       .from('usuarios')
       .insert({
@@ -167,14 +184,14 @@ export const signUpWithSupabase = async (userData: any) => {
       .single()
 
     if (insertError) {
-      console.error('Insert error:', insertError)
+      console.error('❌ Erro ao inserir usuário:', insertError)
       return { error: insertError.message }
     }
 
-    console.log('User created successfully:', newUser)
+    console.log('✅ Usuário criado com sucesso:', newUser.id)
     return {}
   } catch (error: any) {
-    console.error('Signup error:', error)
+    console.error('💥 Erro no cadastro:', error)
     return { error: error.message || 'Erro inesperado durante o cadastro' }
   }
 }
@@ -188,6 +205,8 @@ export const signOutFromSupabase = async () => {
 // Usuario operations
 export const fetchUsuarios = async (): Promise<Usuario[]> => {
   try {
+    console.log('📥 Buscando usuários do Supabase...')
+    
     const { data: usuarios, error } = await supabase
       .from('usuarios')
       .select(`
@@ -197,9 +216,11 @@ export const fetchUsuarios = async (): Promise<Usuario[]> => {
       .order('nome_completo')
 
     if (error) {
-      console.error('Error fetching usuarios:', error)
+      console.error('❌ Erro ao buscar usuários:', error)
       return []
     }
+
+    console.log(`✅ ${usuarios.length} usuários encontrados`)
 
     return usuarios.map(usuario => ({
       id: usuario.id,
@@ -217,7 +238,7 @@ export const fetchUsuarios = async (): Promise<Usuario[]> => {
       updated_at: usuario.updated_at
     }))
   } catch (error) {
-    console.error('Error in fetchUsuarios:', error)
+    console.error('💥 Erro em fetchUsuarios:', error)
     return []
   }
 }
@@ -333,6 +354,8 @@ export const deleteUsuario = async (id: string) => {
 // Interessado operations
 export const fetchInteressados = async (): Promise<Interessado[]> => {
   try {
+    console.log('📥 Buscando interessados do Supabase...')
+    
     const { data: interessados, error } = await supabase
       .from('interessados')
       .select(`
@@ -343,9 +366,11 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
       .order('nome_completo')
 
     if (error) {
-      console.error('Error fetching interessados:', error)
+      console.error('❌ Erro ao buscar interessados:', error)
       return []
     }
+
+    console.log(`✅ ${interessados.length} interessados encontrados`)
 
     return interessados.map(interessado => ({
       id: interessado.id,
@@ -364,7 +389,7 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
       updated_at: interessado.updated_at
     }))
   } catch (error) {
-    console.error('Error in fetchInteressados:', error)
+    console.error('💥 Erro em fetchInteressados:', error)
     return []
   }
 }
@@ -516,15 +541,19 @@ export const deleteInteressado = async (id: string) => {
 // Igreja operations
 export const fetchIgrejas = async (): Promise<Igreja[]> => {
   try {
+    console.log('📥 Buscando igrejas do Supabase...')
+    
     const { data: igrejas, error } = await supabase
       .from('igrejas')
       .select('*')
       .order('nome')
 
     if (error) {
-      console.error('Error fetching igrejas:', error)
+      console.error('❌ Erro ao buscar igrejas:', error)
       return []
     }
+
+    console.log(`✅ ${igrejas.length} igrejas encontradas:`, igrejas.map(i => i.nome))
 
     return igrejas.map(igreja => ({
       id: igreja.id,
@@ -534,7 +563,7 @@ export const fetchIgrejas = async (): Promise<Igreja[]> => {
       updated_at: igreja.updated_at
     }))
   } catch (error) {
-    console.error('Error in fetchIgrejas:', error)
+    console.error('💥 Erro em fetchIgrejas:', error)
     return []
   }
 }
