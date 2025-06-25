@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
+import { Home, UserPlus, Users, BookOpen, Settings, LogOut, UserCog } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { signOutFromSupabase } from '../services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +34,12 @@ const allMenuItems = [
     title: 'Lista de Interessados',
     url: '/interessados',
     icon: Users,
+    allowedFor: ['administrador', 'missionario']
+  },
+  {
+    title: 'Meu Cadastro',
+    url: '/meu-cadastro',
+    icon: UserCog,
     allowedFor: ['administrador', 'missionario']
   },
   {

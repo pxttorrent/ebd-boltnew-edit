@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, Users, BookOpen, Settings, Quote } from 'lucide-react';
+import { UserPlus, Users, BookOpen, Settings, Quote, UserCog } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -19,6 +19,14 @@ const allFeatures = [
     icon: Users,
     link: '/interessados',
     color: 'from-blue-500 to-blue-600',
+    allowedFor: ['administrador', 'missionario']
+  },
+  {
+    title: 'Meu Cadastro',
+    description: 'Gerencie suas informações pessoais e configurações',
+    icon: UserCog,
+    link: '/meu-cadastro',
+    color: 'from-indigo-500 to-indigo-600',
     allowedFor: ['administrador', 'missionario']
   },
   {
@@ -162,7 +170,7 @@ export default function BoasVindas() {
         </div>
 
         {/* Features Grid */}
-        <div className={`grid gap-6 mb-12 ${features.length === 2 ? 'md:grid-cols-2' : features.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+        <div className={`grid gap-6 mb-12 ${features.length <= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
           {features.map((feature, index) => (
             <Link
               key={index}
@@ -207,13 +215,13 @@ export default function BoasVindas() {
             </div>
             <div>
               <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Settings className="w-8 h-8 text-white" />
+                <UserCog className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Controle Total</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Perfil Personalizado</h3>
               <p className="text-gray-600">
                 {currentUser?.tipo === 'administrador'
-                  ? 'Configure permissões, exporte dados e mantenha total controle sobre as informações.'
-                  : 'Acesse todas as funcionalidades necessárias para seu trabalho missionário.'
+                  ? 'Configure seu perfil e gerencie todas as funcionalidades administrativas do sistema.'
+                  : 'Mantenha suas informações atualizadas e personalize sua experiência no sistema.'
                 }
               </p>
             </div>

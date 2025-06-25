@@ -11,6 +11,7 @@ import CadastrarInteressado from "./pages/CadastrarInteressado";
 import ListaInteressados from "./pages/ListaInteressados";
 import CadastroMissionarios from "./pages/CadastroMissionarios";
 import Configuracoes from "./pages/Configuracoes";
+import MeuCadastro from "./pages/MeuCadastro";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useApp } from "./context/AppContext";
@@ -107,6 +108,14 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <ListaInteressados />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/meu-cadastro" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <MeuCadastro />
                 </AppLayout>
               </ProtectedRoute>
             } />
