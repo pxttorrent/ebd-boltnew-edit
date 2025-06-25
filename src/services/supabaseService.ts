@@ -5,47 +5,68 @@ import { hashPassword, verifyPassword } from '@/utils/passwordUtils'
 // Auth functions
 export const signInWithSupabase = async (apelido: string, senha: string) => {
   try {
-    console.log('Attempting to sign in with apelido:', apelido)
+    console.log('🔍 Tentando fazer login com apelido:', apelido)
     
     // First, get the user by apelido
     const { data: usuario, error: userError } = await supabase
       .from('usuarios')
-      .select('*')
+      .select(`
+        *,
+        igrejas (
+          id,
+          nome
+        )
+      `)
       .eq('apelido', apelido)
-      .maybeSingle() // Use maybeSingle() instead of single() to handle no results gracefully
+      .maybeSingle()
+
+    console.log('📊 Resultado da consulta:', { usuario, userError })
 
     if (userError) {
-      console.error('Database error:', userError)
-      return { error: 'Erro ao consultar o banco de dados' }
+      console.error('❌ Erro no banco de dados:', userError)
+      return { error: 'Erro ao consultar o banco de dados: ' + userError.message }
     }
 
     if (!usuario) {
-      console.log('User not found for apelido:', apelido)
-      return { error: 'Usuário não encontrado' }
+      console.log('❌ Usuário não encontrado para apelido:', apelido)
+      
+      // Vamos verificar se existem usuários na tabela
+      const { data: allUsers, error: countError } = await supabase
+        .from('usuarios')
+        .select('apelido, nome_completo')
+        .limit(5)
+      
+      console.log('📋 Usuários existentes na tabela:', allUsers)
+      
+      return { error: 'Usuário não encontrado. Verifique se o usuário foi criado corretamente.' }
     }
+
+    console.log('✅ Usuário encontrado:', {
+      id: usuario.id,
+      nome: usuario.nome_completo,
+      apelido: usuario.apelido,
+      aprovado: usuario.aprovado,
+      tipo: usuario.tipo
+    })
 
     if (!usuario.aprovado) {
       return { error: 'Sua conta ainda não foi aprovada pelo administrador' }
     }
 
     // Verify password
+    console.log('🔐 Verificando senha...')
     const isPasswordValid = await verifyPassword(senha, usuario.senha)
     if (!isPasswordValid) {
+      console.log('❌ Senha incorreta')
       return { error: 'Senha incorreta' }
     }
 
+    console.log('✅ Senha verificada com sucesso')
+
     // Get igreja name
     let igrejaNome = 'Sem igreja'
-    if (usuario.igreja_id) {
-      const { data: igreja } = await supabase
-        .from('igrejas')
-        .select('nome')
-        .eq('id', usuario.igreja_id)
-        .maybeSingle()
-      
-      if (igreja) {
-        igrejaNome = igreja.nome
-      }
+    if (usuario.igrejas) {
+      igrejaNome = usuario.igrejas.nome
     }
 
     // Convert to local Usuario type
@@ -68,10 +89,10 @@ export const signInWithSupabase = async (apelido: string, senha: string) => {
     // Store in localStorage for compatibility
     localStorage.setItem('escola_biblica_current_user', JSON.stringify(localUser))
 
-    console.log('Authentication successful')
+    console.log('🎉 Autenticação bem-sucedida!')
     return { user: localUser }
   } catch (error: any) {
-    console.error('Sign in error:', error)
+    console.error('💥 Erro durante o login:', error)
     return { error: error.message || 'Erro desconhecido durante o login' }
   }
 }
