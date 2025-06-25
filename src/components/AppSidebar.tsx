@@ -92,7 +92,7 @@ export function AppSidebar() {
   const tipoUsuarioComGenero = currentUser ? getTipoUsuarioComGenero(currentUser.tipo, currentUser.nome_completo) : '';
 
   return (
-    <div className="relative">
+    <>
       <Sidebar className="border-r border-gray-200" collapsible="icon">
         <SidebarHeader className="border-b border-gray-200 p-4">
           <div className="flex items-center gap-3">
@@ -180,10 +180,12 @@ export function AppSidebar() {
         </SidebarFooter>
       </Sidebar>
 
-      {/* Elegant Toggle Arrow */}
+      {/* Elegant Toggle Arrow - Fixed Position */}
       <div 
-        className={`absolute top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out ${
-          state === 'expanded' ? '-right-3' : '-right-3'
+        className={`fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out ${
+          state === 'expanded' 
+            ? 'left-[calc(16rem-12px)]' // 16rem (sidebar width) - 12px (half button width)
+            : 'left-[calc(3rem-12px)]'   // 3rem (collapsed width) - 12px (half button width)
         }`}
       >
         <button
@@ -207,6 +209,6 @@ export function AppSidebar() {
           <div className="absolute inset-0 rounded-r-lg bg-blue-400 opacity-0 group-active:opacity-20 transition-opacity duration-150" />
         </button>
       </div>
-    </div>
+    </>
   );
 }
