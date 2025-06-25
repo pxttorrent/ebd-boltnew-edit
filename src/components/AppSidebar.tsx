@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -9,15 +8,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
+import { Home, UserPlus, Users, BookOpen, Settings } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
   {
@@ -49,34 +44,8 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { currentUser, setCurrentUser } = useApp();
-  const { signOut } = useAuth();
+  const { currentUser } = useApp();
   const { state } = useSidebar();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      console.log('Iniciando logout...');
-      await signOut();
-      setCurrentUser(null);
-      
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso."
-      });
-      
-      console.log('Logout realizado com sucesso');
-      
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      toast({
-        title: "Erro no Logout",
-        description: "Ocorreu um erro ao fazer logout. Tente novamente.",
-        variant: "destructive"
-      });
-    }
-  };
 
   return (
     <Sidebar className="border-r border-gray-200" collapsible="icon">
@@ -136,18 +105,6 @@ export function AppSidebar() {
             )}
           </div>
         )}
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="flex items-center gap-2 w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <LogOut className="w-4 h-4" />
-            {state === 'expanded' && <span>Sair</span>}
-          </Button>
-        </div>
       </SidebarFooter>
     </Sidebar>
   );

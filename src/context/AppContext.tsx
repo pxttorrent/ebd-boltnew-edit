@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Usuario, Interessado, Igreja } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../contexts/AuthContext';
 import {
   fetchUsuarios,
   addUsuario as addUsuarioToSupabase,
@@ -14,8 +13,7 @@ import {
   fetchIgrejas,
   addIgreja as addIgrejaToSupabase,
   updateIgreja as updateIgrejaInSupabase,
-  deleteIgreja as deleteIgrejaFromSupabase,
-  getCurrentUserFromSupabase
+  deleteIgreja as deleteIgrejaFromSupabase
 } from '../services/supabaseService';
 
 interface AppContextType {
@@ -53,20 +51,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  // Load data when user is authenticated
+  // Load data on mount
   useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setUsuarios([]);
-      setInteressados([]);
-      setIgrejas([]);
-      setCurrentUser(null);
-      setLoading(false);
-    }
-  }, [user]);
+    loadData();
+  }, []);
 
   const loadData = async () => {
     try {
@@ -83,14 +72,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setInteressados(interessadosData);
       setIgrejas(igrejasData);
 
-      // Get current user from localStorage
-      const currentUserData = getCurrentUserFromSupabase();
-      setCurrentUser(currentUserData);
-
-      if (currentUserData) {
-        console.log('Usuário atual encontrado:', currentUserData);
+      // Set first admin user as current user for system access
+      const adminUser = usuariosData.find(u => u.tipo === 'administrador' && u.aprovado);
+      if (adminUser) {
+        setCurrentUser(adminUser);
+        console.log('Sistema iniciado com usuário administrador:', adminUser.nome_completo);
       } else {
-        console.warn('Usuário atual não encontrado');
+        console.warn('Nenhum usuário administrador encontrado');
       }
 
     } catch (error: any) {
@@ -144,7 +132,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (currentUser?.id === id) {
         const updatedUser = { ...currentUser, ...updates };
         setCurrentUser(updatedUser);
-        localStorage.setItem('escola_biblica_current_user', JSON.stringify(updatedUser));
       }
 
       toast({
@@ -188,7 +175,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.log('Context: Adicionando interessado:', interessado);
       
       // Verificar se há usuário logado
-      const currentUser = getCurrentUserFromSupabase();
       if (!currentUser) {
         throw new Error('Usuário não autenticado');
       }
