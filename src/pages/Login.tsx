@@ -361,9 +361,6 @@ export default function Login() {
                       required
                       disabled={isLoggingIn}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Seu login será: {loginData.apelido}@escola-biblica.app
-                    </p>
                   </div>
 
                   <div>
