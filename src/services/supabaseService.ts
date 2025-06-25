@@ -101,8 +101,8 @@ export const signUpWithSupabase = async (userData: any) => {
   try {
     console.log('🚀 Iniciando processo de cadastro:', userData.nome_completo)
     
-    // Validar dados obrigatórios
-    if (!userData.nome_completo || !userData.apelido || !userData.senha || !userData.email_pessoal || !userData.igreja) {
+    // Validar dados obrigatórios (removido email_pessoal)
+    if (!userData.nome_completo || !userData.apelido || !userData.senha || !userData.igreja) {
       return { error: 'Todos os campos obrigatórios devem ser preenchidos' }
     }
 
@@ -110,12 +110,6 @@ export const signUpWithSupabase = async (userData: any) => {
     const apelidoRegex = /^[a-z0-9.]+$/
     if (!apelidoRegex.test(userData.apelido)) {
       return { error: 'O apelido deve conter apenas letras minúsculas, números e pontos' }
-    }
-
-    // Validar e-mail
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(userData.email_pessoal)) {
-      return { error: 'Por favor, insira um e-mail válido' }
     }
 
     // Check if apelido already exists
@@ -168,7 +162,7 @@ export const signUpWithSupabase = async (userData: any) => {
         apelido: userData.apelido,
         login_acesso: userData.login_acesso,
         senha: hashedPassword,
-        email_pessoal: userData.email_pessoal,
+        email_pessoal: userData.email_pessoal || null, // Pode ser vazio
         igreja_id: igreja.id,
         tipo: userData.tipo || 'missionario',
         foto_perfil: userData.foto_perfil || null,

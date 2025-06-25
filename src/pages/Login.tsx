@@ -30,7 +30,6 @@ export default function Login() {
     apelido: '',
     senha: '',
     confirmarSenha: '',
-    email_pessoal: '',
     igreja: '',
     tipo: 'missionario' as 'administrador' | 'missionario'
   });
@@ -92,7 +91,7 @@ export default function Login() {
     
     // Validações
     if (!signupData.nome_completo || !signupData.apelido || !signupData.senha || 
-        !signupData.confirmarSenha || !signupData.email_pessoal || !signupData.igreja) {
+        !signupData.confirmarSenha || !signupData.igreja) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -119,17 +118,6 @@ export default function Login() {
       return;
     }
 
-    // Validar e-mail
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(signupData.email_pessoal)) {
-      toast({
-        title: "Erro",
-        description: "Por favor, insira um e-mail válido.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Validar apelido (apenas letras, números e pontos)
     const apelidoRegex = /^[a-z0-9.]+$/;
     if (!apelidoRegex.test(signupData.apelido)) {
@@ -148,7 +136,8 @@ export default function Login() {
       
       const result = await signUpWithSupabase({
         ...signupData,
-        login_acesso
+        login_acesso,
+        email_pessoal: '' // E-mail vazio por padrão
       });
       
       if (result.error) {
@@ -171,7 +160,6 @@ export default function Login() {
         apelido: '',
         senha: '',
         confirmarSenha: '',
-        email_pessoal: '',
         igreja: '',
         tipo: 'missionario'
       });
@@ -300,19 +288,6 @@ export default function Login() {
                     <p className="text-xs text-gray-500 mt-1">
                       Seu login será: {signupData.apelido}@escola-biblica.app
                     </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="signup-email">E-mail *</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={signupData.email_pessoal}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, email_pessoal: e.target.value }))}
-                      placeholder="seu.email@exemplo.com"
-                      required
-                      disabled={isSigningUp}
-                    />
                   </div>
 
                   <div>
