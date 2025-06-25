@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, Users, BookOpen, Settings, Quote, UserCog } from 'lucide-react';
+import { UserPlus, Users, BookOpen, Settings, Quote, UserCog, ChevronUp, ChevronDown, Building, BarChart3 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { StatusLabels } from '../types';
 
 const allFeatures = [
   {
@@ -84,7 +86,9 @@ const versosBiblicos = [
 
 export default function BoasVindas() {
   const [versoAtual, setVersoAtual] = useState(versosBiblicos[0]);
-  const { usuarios, interessados, totalInteressados, currentUser } = useApp();
+  const [showIgrejasStats, setShowIgrejasStats] = useState(true);
+  const [showStatusStats, setShowStatusStats] = useState(true);
+  const { usuarios, interessados, totalInteressados, currentUser, igrejas } = useApp();
 
   useEffect(() => {
     const indiceAleatorio = Math.floor(Math.random() * versosBiblicos.length);
@@ -105,6 +109,61 @@ export default function BoasVindas() {
   
   const missionariosAguardandoAprovacao = usuarios.filter(u => !u.aprovado).length;
   const prontosParaBatismo = interessados.filter(i => i.status === 'A').length;
+
+  // Calcular estatísticas por igreja
+  const estatisticasPorIgreja = useMemo(() => {
+    const stats = new Map();
+    
+    // Inicializar com todas as igrejas ativas
+    igrejas.filter(igreja => igreja.ativa).forEach(igreja => {
+      stats.set(igreja.nome, 0);
+    });
+    
+    // Contar interessados por igreja
+    interessados.forEach(interessado => {
+      const igreja = interessado.cidade || interessado.igreja;
+      if (igreja) {
+        stats.set(igreja, (stats.get(igreja) || 0) + 1);
+      }
+    });
+    
+    // Converter para array e ordenar por quantidade (decrescente)
+    return Array.from(stats.entries())
+      .map(([nome, quantidade]) => ({ nome, quantidade }))
+      .sort((a, b) => b.quantidade - a.quantidade);
+  }, [interessados, igrejas]);
+
+  // Calcular estatísticas por status
+  const estatisticasPorStatus = useMemo(() => {
+    const stats = new Map();
+    
+    // Inicializar com todos os status
+    Object.keys(StatusLabels).forEach(status => {
+      stats.set(status, 0);
+    });
+    
+    // Contar interessados por status
+    interessados.forEach(interessado => {
+      stats.set(interessado.status, (stats.get(interessado.status) || 0) + 1);
+    });
+    
+    // Converter para array e ordenar por prioridade (A > B > C > D > E)
+    const statusOrder = ['A', 'B', 'C', 'D', 'E'];
+    return statusOrder.map(status => ({
+      status,
+      label: StatusLabels[status as keyof typeof StatusLabels],
+      quantidade: stats.get(status) || 0
+    }));
+  }, [interessados]);
+
+  // Cores para os status
+  const statusColors = {
+    'A': 'from-green-500 to-green-600',
+    'B': 'from-blue-500 to-blue-600', 
+    'C': 'from-yellow-500 to-yellow-600',
+    'D': 'from-purple-500 to-purple-600',
+    'E': 'from-gray-500 to-gray-600'
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
@@ -130,7 +189,7 @@ export default function BoasVindas() {
           </div>
         </div>
 
-        {/* Cards de Estatísticas */}
+        {/* Cards de Estatísticas Principais */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {currentUser?.tipo === 'administrador' && (
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
@@ -180,6 +239,105 @@ export default function BoasVindas() {
               <div className="text-2xl font-bold text-purple-600">{prontosParaBatismo}</div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Estatísticas por Igreja */}
+        <div className="mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Building className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-bold text-gray-900">Interessados por Igreja</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowIgrejasStats(!showIgrejasStats)}
+                className="text-gray-500 hover:text-gray-700 p-1"
+              >
+                {showIgrejasStats ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            
+            {showIgrejasStats && (
+              <div className="p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                  {estatisticasPorIgreja.map((item, index) => (
+                    <div
+                      key={item.nome}
+                      className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 hover:shadow-md transition-shadow"
+                    >
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-700">{item.quantidade}</div>
+                        <div className="text-xs text-blue-600 font-medium truncate" title={item.nome}>
+                          {item.nome}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {estatisticasPorIgreja.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Building className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Nenhuma igreja com interessados cadastrados ainda.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Estatísticas por Status */}
+        <div className="mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-5 h-5 text-green-600" />
+                <h2 className="text-lg font-bold text-gray-900">Interessados por Status</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowStatusStats(!showStatusStats)}
+                className="text-gray-500 hover:text-gray-700 p-1"
+              >
+                {showStatusStats ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            
+            {showStatusStats && (
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {estatisticasPorStatus.map((item) => (
+                    <div
+                      key={item.status}
+                      className={`bg-gradient-to-br ${statusColors[item.status as keyof typeof statusColors]} rounded-lg p-4 text-white hover:shadow-lg transition-shadow`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl font-bold mb-1">{item.quantidade}</div>
+                        <div className="text-sm font-medium mb-1">Status {item.status}</div>
+                        <div className="text-xs opacity-90 leading-tight">{item.label}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {estatisticasPorStatus.every(item => item.quantidade === 0) && (
+                  <div className="text-center py-8 text-gray-500">
+                    <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum interessado cadastrado ainda.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Features Grid */}
