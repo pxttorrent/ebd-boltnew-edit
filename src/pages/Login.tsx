@@ -479,15 +479,6 @@ export default function Login() {
                         )}
                       </select>
                     )}
-                    
-                    {/* Debug info */}
-                    <div className="text-xs text-gray-500 mt-1 space-y-1">
-                      <p>Total de igrejas: {igrejas.length}</p>
-                      <p>Igrejas ativas: {igrejasAtivas.length}</p>
-                      {igrejasAtivas.length > 0 && (
-                        <p>Disponíveis: {igrejasAtivas.map(i => i.nome).join(', ')}</p>
-                      )}
-                    </div>
                   </div>
 
                   <div>
