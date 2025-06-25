@@ -7,6 +7,7 @@ import {
   updateUsuario as updateUsuarioInSupabase,
   deleteUsuario as deleteUsuarioFromSupabase,
   fetchInteressados,
+  fetchInteressadosCount,
   addInteressado as addInteressadoToSupabase,
   updateInteressado as updateInteressadoInSupabase,
   deleteInteressado as deleteInteressadoFromSupabase,
@@ -28,6 +29,7 @@ interface AppContextType {
 
   // Interessado management
   interessados: Interessado[];
+  totalInteressados: number; // Contagem total para missionários
   addInteressado: (interessado: Omit<Interessado, 'id'>) => Promise<void>;
   updateInteressado: (id: string, updates: Partial<Interessado>) => Promise<void>;
   deleteInteressado: (id: string) => Promise<void>;
@@ -48,6 +50,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [interessados, setInteressados] = useState<Interessado[]>([]);
+  const [totalInteressados, setTotalInteressados] = useState<number>(0);
   const [igrejas, setIgrejas] = useState<Igreja[]>([]);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +75,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (currentUser) {
       console.log('🔄 Usuário mudou, recarregando interessados para:', currentUser.nome_completo, '(', currentUser.tipo, ')');
       loadInteressados();
+      loadTotalInteressados();
     }
   }, [currentUser]);
 
@@ -119,10 +123,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const loadTotalInteressados = async () => {
+    try {
+      console.log('📊 Carregando contagem total de interessados...');
+      const total = await fetchInteressadosCount();
+      console.log('📈 Total de interessados:', total);
+      setTotalInteressados(total);
+    } catch (error: any) {
+      console.error('Error loading total interessados:', error);
+      // Não mostrar toast para erro de contagem, é informação secundária
+    }
+  };
+
   const refreshData = async () => {
     await loadData();
     if (currentUser) {
       await loadInteressados();
+      await loadTotalInteressados();
     }
   };
 
@@ -228,6 +245,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       setInteressados(prev => [...prev, newInteressado]);
       
+      // Atualizar contagem total
+      await loadTotalInteressados();
+      
       toast({
         title: "Sucesso!",
         description: "Interessado adicionado com sucesso."
@@ -268,6 +288,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await deleteInteressadoFromSupabase(id);
       setInteressados(prev => prev.filter(interessado => interessado.id !== id));
+      
+      // Atualizar contagem total
+      await loadTotalInteressados();
       
       toast({
         title: "Sucesso!",
@@ -368,6 +391,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteUsuario,
       setCurrentUser,
       interessados,
+      totalInteressados,
       addInteressado,
       updateInteressado,
       deleteInteressado,

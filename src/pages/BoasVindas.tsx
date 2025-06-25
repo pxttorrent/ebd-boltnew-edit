@@ -84,7 +84,7 @@ const versosBiblicos = [
 
 export default function BoasVindas() {
   const [versoAtual, setVersoAtual] = useState(versosBiblicos[0]);
-  const { usuarios, interessados, currentUser } = useApp();
+  const { usuarios, interessados, totalInteressados, currentUser } = useApp();
 
   useEffect(() => {
     const indiceAleatorio = Math.floor(Math.random() * versosBiblicos.length);
@@ -96,9 +96,13 @@ export default function BoasVindas() {
     currentUser && feature.allowedFor.includes(currentUser.tipo)
   );
 
-  // Calcular estatísticas
+  // Calcular estatísticas baseado no tipo de usuário
   const numeroMissionarios = usuarios.filter(u => u.aprovado).length;
-  const numeroInteressados = interessados.length;
+  
+  // Para missionários: mostrar contagem total do sistema, mas lista filtrada
+  // Para administradores: mostrar contagem da lista atual (que é total mesmo)
+  const numeroInteressados = currentUser?.tipo === 'missionario' ? totalInteressados : interessados.length;
+  
   const missionariosAguardandoAprovacao = usuarios.filter(u => !u.aprovado).length;
   const prontosParaBatismo = interessados.filter(i => i.status === 'A').length;
 
@@ -141,10 +145,17 @@ export default function BoasVindas() {
 
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total de Interessados</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                {currentUser?.tipo === 'missionario' ? 'Total de Interessados (Sistema)' : 'Total de Interessados'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{numeroInteressados}</div>
+              {currentUser?.tipo === 'missionario' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Você gerencia: {interessados.length}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -161,7 +172,9 @@ export default function BoasVindas() {
 
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Prontos para Batismo</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                {currentUser?.tipo === 'missionario' ? 'Prontos para Batismo (Seus)' : 'Prontos para Batismo'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">{prontosParaBatismo}</div>

@@ -14,12 +14,12 @@ import InteressadosActions from '../components/InteressadosActions';
 import InteressadosStats from '../components/InteressadosStats';
 import InteressadosTable from '../components/InteressadosTable';
 import WhatsAppMassMessage from '../components/WhatsAppMassMessage';
-import { Info, Shield, User } from 'lucide-react';
+import { Info, Shield, User, BookOpen } from 'lucide-react';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
 export default function ListaInteressados() {
-  const { interessados, deleteInteressado, usuarios, currentUser } = useApp();
+  const { interessados, totalInteressados, deleteInteressado, usuarios, currentUser } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -319,13 +319,16 @@ export default function ListaInteressados() {
               <Alert className="mb-6 bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-800">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
+                  <div className="flex items-start gap-2">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <BookOpen className="w-4 h-4" />
+                    </div>
                     <span>
-                      <strong>Acesso Restrito:</strong> Como missionário, você visualiza apenas os interessados que você mesmo cadastrou.
+                      <strong>Acesso Personalizado:</strong> Como missionário, você visualiza os interessados que você cadastrou e aqueles onde você é o instrutor bíblico.
                       {filteredInteressados.length === 0 && (
                         <span className="block mt-1 text-sm">
-                          Você ainda não cadastrou nenhum interessado. Use a opção "Cadastrar Interessados" no menu para começar.
+                          Você ainda não tem interessados vinculados. Use "Cadastrar Interessados" para começar ou seja designado como instrutor de algum interessado.
                         </span>
                       )}
                     </span>
@@ -371,7 +374,7 @@ export default function ListaInteressados() {
 
             <InteressadosStats
               filteredCount={filteredInteressados.length}
-              totalCount={interessados.length}
+              totalCount={currentUser?.tipo === 'missionario' ? totalInteressados : interessados.length}
               currentUser={currentUser}
             />
           </div>
@@ -382,11 +385,14 @@ export default function ListaInteressados() {
               <div className="text-center py-12">
                 {currentUser?.tipo === 'missionario' ? (
                   <div className="space-y-4">
-                    <User className="w-16 h-16 text-gray-400 mx-auto" />
+                    <div className="flex justify-center gap-2">
+                      <User className="w-16 h-16 text-gray-400" />
+                      <BookOpen className="w-16 h-16 text-gray-400" />
+                    </div>
                     <div>
                       <p className="text-gray-500 text-lg font-medium">Nenhum interessado encontrado</p>
                       <p className="text-gray-400 text-sm mt-2">
-                        Como missionário, você só pode ver os interessados que cadastrou.
+                        Como missionário, você vê interessados que cadastrou ou onde é instrutor.
                         {interessados.length === 0 
                           ? " Comece cadastrando seu primeiro interessado!"
                           : " Use os filtros acima para refinar sua busca."

@@ -400,6 +400,28 @@ export const deleteUsuario = async (id: string) => {
   }
 }
 
+// Função para buscar contagem total de interessados (para missionários)
+export const fetchInteressadosCount = async (): Promise<number> => {
+  try {
+    console.log('📊 Buscando contagem total de interessados...')
+    
+    const { count, error } = await supabase
+      .from('interessados')
+      .select('*', { count: 'exact', head: true })
+
+    if (error) {
+      console.error('❌ Erro ao buscar contagem de interessados:', error)
+      return 0
+    }
+
+    console.log(`📈 Total de interessados no sistema: ${count}`)
+    return count || 0
+  } catch (error) {
+    console.error('💥 Erro em fetchInteressadosCount:', error)
+    return 0
+  }
+}
+
 // Interessado operations
 export const fetchInteressados = async (): Promise<Interessado[]> => {
   try {
@@ -419,10 +441,12 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
       `)
       .order('nome_completo')
 
-    // Se for missionário, filtrar apenas os interessados que ele cadastrou
+    // Se for missionário, filtrar interessados que ele cadastrou OU onde ele é instrutor
     if (currentUser && currentUser.tipo === 'missionario') {
-      console.log('🔒 Usuário missionário - filtrando apenas interessados cadastrados por ele (ID:', currentUser.id, ')')
-      query = query.eq('cadastrado_por_id', currentUser.id)
+      console.log('🔒 Usuário missionário - filtrando interessados cadastrados por ele OU onde ele é instrutor (ID:', currentUser.id, ')')
+      
+      // Usar OR para incluir interessados cadastrados pelo missionário OU onde ele é instrutor
+      query = query.or(`cadastrado_por_id.eq.${currentUser.id},instrutor_biblico_id.eq.${currentUser.id}`)
     } else if (currentUser && currentUser.tipo === 'administrador') {
       console.log('🔓 Usuário administrador - acesso total aos interessados')
     } else {
@@ -442,7 +466,10 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
     if (currentUser && currentUser.tipo === 'missionario') {
       console.log('🔍 Interessados retornados para missionário:')
       interessados.forEach(i => {
-        console.log(`  - ${i.nome_completo} (cadastrado por: ${i.cadastrado_por?.nome_completo || 'N/A'})`)
+        const cadastradoPor = i.cadastrado_por?.nome_completo || 'N/A'
+        const instrutor = i.instrutor?.nome_completo || 'N/A'
+        const motivo = i.cadastrado_por_id === currentUser.id ? 'cadastrou' : 'é instrutor'
+        console.log(`  - ${i.nome_completo} (${motivo}) - Cadastrado por: ${cadastradoPor}, Instrutor: ${instrutor}`)
       })
     }
 
