@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Usuario, TipoUsuarioLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User, Users, Building, MessageCircle } from 'lucide-react';
+import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User, Users, Building, MessageCircle, Database } from 'lucide-react';
 import EditarMissionario from '../components/EditarMissionario';
 import GerenciarIgrejas from '../components/GerenciarIgrejas';
 import WhatsAppConfig from '../components/WhatsAppConfig';
+import DatabaseConfig from '../components/DatabaseConfig';
 
 export default function Configuracoes() {
   const { usuarios, updateUsuario, deleteUsuario, currentUser, igrejas } = useApp();
@@ -243,7 +244,7 @@ export default function Configuracoes() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
-                <p className="text-gray-600">Gerencie usuários, permissões, igrejas e integrações do sistema</p>
+                <p className="text-gray-600">Gerencie usuários, permissões, igrejas, banco de dados e integrações do sistema</p>
                 <div className="flex gap-4 text-sm mt-2">
                   <p className="text-blue-600">Total de usuários: {localUsuarios.length}</p>
                   <p className="text-yellow-600">Pendentes: {usuariosPendentes.length}</p>
@@ -274,7 +275,7 @@ export default function Configuracoes() {
 
           {/* Tabs */}
           <Tabs defaultValue="usuarios" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mx-6 mt-6">
+            <TabsList className="grid w-full grid-cols-5 mx-6 mt-6">
               <TabsTrigger value="usuarios" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Usuários
@@ -282,6 +283,10 @@ export default function Configuracoes() {
               <TabsTrigger value="igrejas" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Igrejas
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex items-center gap-2">
+                <Database className="w-4 h-4" />
+                Banco de Dados
               </TabsTrigger>
               <TabsTrigger value="whatsapp" className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
@@ -595,6 +600,10 @@ export default function Configuracoes() {
 
             <TabsContent value="igrejas" className="p-6">
               <GerenciarIgrejas currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="database" className="p-6">
+              <DatabaseConfig currentUser={currentUser} />
             </TabsContent>
 
             <TabsContent value="whatsapp" className="p-6">
