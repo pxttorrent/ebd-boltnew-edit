@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useApp } from '../context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Igreja } from '../types';
-import { Edit, Trash, Plus, Building, AlertTriangle } from 'lucide-react';
+import { Edit, Trash, Plus, Building } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 
 interface GerenciarIgrejasProps {
@@ -139,21 +139,6 @@ export default function GerenciarIgrejas({ currentUser }: GerenciarIgrejasProps)
     const interessadosCount = interessados.filter(i => i.igreja === igrejaNome || i.cidade === igrejaNome).length;
     return { usuariosCount, interessadosCount };
   };
-
-  // Verificar se o usuário é administrador
-  if (currentUser?.tipo !== 'administrador') {
-    return (
-      <div className="text-center py-8">
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Restrito</h3>
-        <p className="text-gray-600">Apenas administradores podem gerenciar igrejas.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

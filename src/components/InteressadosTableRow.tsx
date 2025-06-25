@@ -33,8 +33,6 @@ export default function InteressadosTableRow({
     u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()
   );
 
-  const isAdmin = currentUser?.tipo === 'administrador';
-
   return (
     <TableRow className="hover:bg-gray-50">
       <TableCell className="font-medium">{interessado.nome_completo}</TableCell>
@@ -92,14 +90,12 @@ export default function InteressadosTableRow({
       </TableCell>
       <TableCell>
         <div className="flex gap-1 justify-center">
-          {isAdmin && (
-            <WhatsAppButton
-              telefone={interessado.telefone}
-              nome={interessado.nome_completo}
-              onWhatsAppClick={onWhatsAppClick}
-              currentUser={currentUser}
-            />
-          )}
+          <WhatsAppButton
+            telefone={interessado.telefone}
+            nome={interessado.nome_completo}
+            onWhatsAppClick={onWhatsAppClick}
+            currentUser={currentUser}
+          />
           <Button 
             variant="ghost" 
             size="sm" 

@@ -43,16 +43,6 @@ export default function Configuracoes() {
   };
 
   const handleTipoChange = async (userId: string, tipo: Usuario['tipo']) => {
-    // Only allow admins to change user types
-    if (currentUser?.tipo !== 'administrador') {
-      toast({
-        title: "Acesso Negado",
-        description: "Apenas administradores podem alterar tipos de usuários.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       // Update immediately in context
       await updateUsuario(userId, { tipo });
@@ -210,23 +200,6 @@ export default function Configuracoes() {
     pode_exportar: 'Pode Exportar'
   };
 
-  // Check if current user is admin
-  const isAdmin = currentUser?.tipo === 'administrador';
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
-            <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
-            <p className="text-sm text-gray-500 mt-2">Apenas administradores podem gerenciar configurações.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Separar usuários aprovados e pendentes
   const usuariosPendentes = localUsuarios.filter(u => !u.aprovado);
   const usuariosAprovados = localUsuarios.filter(u => u.aprovado);
@@ -341,9 +314,8 @@ export default function Configuracoes() {
                               <Select 
                                 value={usuario.tipo} 
                                 onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
-                                disabled={!isAdmin}
                               >
-                                <SelectTrigger className={`w-32 ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <SelectTrigger className="w-32">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -466,9 +438,8 @@ export default function Configuracoes() {
                               <Select 
                                 value={usuario.tipo} 
                                 onValueChange={(value) => handleTipoChange(usuario.id, value as Usuario['tipo'])}
-                                disabled={!isAdmin}
                               >
-                                <SelectTrigger className={`w-32 ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <SelectTrigger className="w-32">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -563,9 +534,6 @@ export default function Configuracoes() {
                       <p className="text-gray-600 flex items-center gap-2">
                         <User className="w-4 h-4 text-blue-600" />
                         <strong>Missionário:</strong> Acesso apenas à sua igreja
-                      </p>
-                      <p className="text-red-600 text-xs mt-2">
-                        <strong>Importante:</strong> Apenas administradores podem alterar tipos de usuários
                       </p>
                     </div>
                   </div>

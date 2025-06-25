@@ -19,11 +19,6 @@ export default function WhatsAppButton({
   variant = 'ghost',
   currentUser
 }: WhatsAppButtonProps) {
-  // Só mostrar para administradores
-  if (currentUser?.tipo !== 'administrador') {
-    return null;
-  }
-
   const handleClick = () => {
     if (!telefone || telefone.trim() === '') {
       return;

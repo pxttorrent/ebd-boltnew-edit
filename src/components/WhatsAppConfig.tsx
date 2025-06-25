@@ -8,7 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, Settings, Key, TestTube, AlertTriangle, CheckCircle, Info, Eye, EyeOff } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Database, 
+  TestTube, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  Info, 
+  Eye, 
+  EyeOff,
+  Server,
+  Settings,
+  Shield
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WhatsAppConfigProps {
@@ -75,21 +88,6 @@ export default function WhatsAppConfig({ currentUser }: WhatsAppConfigProps) {
       }
     }
   }, []);
-
-  // Verificar se o usuário é administrador
-  if (currentUser?.tipo !== 'administrador') {
-    return (
-      <div className="text-center py-8">
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Restrito</h3>
-        <p className="text-gray-600">Apenas administradores podem configurar a API do WhatsApp.</p>
-      </div>
-    );
-  }
 
   const handleSaveSettings = () => {
     try {
@@ -171,7 +169,7 @@ export default function WhatsAppConfig({ currentUser }: WhatsAppConfigProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageCircle className="w-6 h-6 text-green-600" />
+          <Database className="w-6 h-6 text-green-600" />
           <div>
             <h2 className="text-xl font-bold text-gray-900">Configurações do WhatsApp</h2>
             <p className="text-sm text-gray-600">Configure a API do WhatsApp para envio de mensagens</p>
@@ -205,11 +203,11 @@ export default function WhatsAppConfig({ currentUser }: WhatsAppConfigProps) {
       <Tabs defaultValue="api" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="api" className="flex items-center gap-2">
-            <Key className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
             API
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <MessageCircle className="w-4 h-4" />
+            <Database className="w-4 h-4" />
             Templates
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex items-center gap-2">
@@ -394,7 +392,7 @@ export default function WhatsAppConfig({ currentUser }: WhatsAppConfigProps) {
             <CardHeader>
               <CardTitle className="text-lg">Templates de Mensagens</CardTitle>
               <p className="text-sm text-gray-600">
-                Configure templates padrão para diferentes tipos de mensagens. Use {'{nome}'} para personalizar.
+                Configure templates padr�o para diferentes tipos de mensagens. Use {'{nome}'} para personalizar.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">

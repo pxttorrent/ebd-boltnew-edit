@@ -57,15 +57,6 @@ export default function CadastrarInteressado() {
       return;
     }
 
-    if (!currentUser) {
-      toast({
-        title: "Erro",
-        description: "Usuário não encontrado. Faça login novamente.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {

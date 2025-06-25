@@ -34,9 +34,6 @@ export default function ListaInteressados() {
   const [interessadoParaAtualizarInstrutor, setInteressadoParaAtualizarInstrutor] = useState<Interessado | null>(null);
   const [isWhatsAppMassOpen, setIsWhatsAppMassOpen] = useState(false);
 
-  // Verificar se o usuário é administrador
-  const isAdmin = currentUser?.tipo === 'administrador';
-
   // Definir colunas disponíveis para o relatório
   const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
     { key: 'nome_completo', label: 'Nome Completo', selected: true },
@@ -51,30 +48,10 @@ export default function ListaInteressados() {
     { key: 'observacoes', label: 'Observações', selected: false }
   ]);
 
-  // Filtrar interessados baseado no tipo de usuário
+  // Filtrar interessados - sem restrições de acesso
   const filteredInteressados = useMemo(() => {
-    console.log('=== DEBUG FILTRO MISSIONÁRIO ===');
-    console.log('Current user:', currentUser);
-    console.log('Total interessados:', interessados.length);
-    
-    let baseInteressados = interessados;
-
-    // Aplicar filtro por tipo de usuário
-    if (currentUser?.tipo === 'missionario') {
-      console.log('Filtrando para missionário:', currentUser.nome_completo);
-      
-      // Missionários só podem ver interessados dos quais são instrutores bíblicos
-      baseInteressados = interessados.filter(interessado => {
-        const isInstrutor = interessado.instrutor_biblico.toLowerCase().trim() === currentUser.nome_completo.toLowerCase().trim();
-        console.log(`Interessado: ${interessado.nome_completo}, Instrutor: '${interessado.instrutor_biblico}', User: '${currentUser.nome_completo}', Match: ${isInstrutor}`);
-        return isInstrutor;
-      });
-      
-      console.log('Interessados filtrados para missionário:', baseInteressados.length);
-    }
-
     // Aplicar filtros de busca
-    const finalFiltered = baseInteressados.filter(interessado => {
+    return interessados.filter(interessado => {
       const matchesSearch = interessado.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         interessado.telefone.includes(searchTerm) ||
         interessado.cidade.toLowerCase().includes(searchTerm.toLowerCase());
@@ -85,39 +62,14 @@ export default function ListaInteressados() {
       
       return matchesSearch && matchesStatus && matchesCidade;
     });
+  }, [interessados, searchTerm, statusFilter, cidadeFilter]);
 
-    console.log('Interessados finais após filtros:', finalFiltered.length);
-    console.log('=== FIM DEBUG ===');
-
-    return finalFiltered;
-  }, [interessados, searchTerm, statusFilter, cidadeFilter, currentUser]);
-
-  // Obter cidades únicas baseado nos interessados que o usuário pode ver
+  // Obter cidades únicas
   const cidadesUnicas = useMemo(() => {
-    let interessadosVisiveis = interessados;
-    
-    // Aplicar o mesmo filtro por tipo de usuário para as cidades
-    if (currentUser?.tipo === 'missionario') {
-      interessadosVisiveis = interessados.filter(interessado => 
-        interessado.instrutor_biblico.toLowerCase().trim() === currentUser.nome_completo.toLowerCase().trim()
-      );
-    }
-    
-    return [...new Set(interessadosVisiveis.map(i => i.cidade))].sort();
-  }, [interessados, currentUser]);
+    return [...new Set(interessados.map(i => i.cidade))].sort();
+  }, [interessados]);
 
   const handleDelete = (id: string, nome: string) => {
-    // Verificar se o usuário pode excluir este interessado
-    const interessado = interessados.find(i => i.id === id);
-    if (currentUser?.tipo === 'missionario' && interessado?.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
-      toast({
-        title: "Acesso negado",
-        description: "Você só pode excluir interessados dos quais é instrutor bíblico.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (window.confirm(`Tem certeza que deseja excluir ${nome}?`)) {
       deleteInteressado(id);
       toast({
@@ -128,16 +80,6 @@ export default function ListaInteressados() {
   };
 
   const handleEdit = (interessado: Interessado) => {
-    // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
-      toast({
-        title: "Acesso negado",
-        description: "Você só pode editar interessados dos quais é instrutor bíblico.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setEditingInteressado(interessado);
     setIsEditDialogOpen(true);
   };
@@ -292,16 +234,6 @@ export default function ListaInteressados() {
   };
 
   const handleInstrutorClick = (interessado: Interessado) => {
-    // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
-      toast({
-        title: "Acesso negado",
-        description: "Você só pode editar interessados dos quais é instrutor bíblico.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Verificar se o instrutor existe na lista de usuários
     const instrutorExiste = usuarios.some(usuario => 
       usuario.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()
@@ -328,16 +260,6 @@ export default function ListaInteressados() {
   };
 
   const handleEdicaoRapida = (interessado: Interessado, campo: 'status' | 'instrutor_biblico' | 'frequenta_cultos') => {
-    // Verificar se o usuário pode editar este interessado
-    if (currentUser?.tipo === 'missionario' && interessado.instrutor_biblico.toLowerCase().trim() !== currentUser.nome_completo.toLowerCase().trim()) {
-      toast({
-        title: "Acesso negado",
-        description: "Você só pode editar interessados dos quais é instrutor bíblico.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setInteressadoEdicaoRapida(interessado);
     setCampoEdicaoRapida(campo);
     setIsEdicaoRapidaOpen(true);
@@ -382,20 +304,6 @@ export default function ListaInteressados() {
     setIsWhatsAppMassOpen(true);
   };
 
-  const getEmptyMessage = () => {
-    if (currentUser?.tipo === 'missionario') {
-      if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
-        return 'Nenhum interessado encontrado com os critérios de busca entre aqueles dos quais você é instrutor bíblico.';
-      }
-      return 'Você ainda não é instrutor bíblico de nenhum interessado.';
-    }
-    
-    if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
-      return 'Nenhum interessado encontrado com os critérios de busca.';
-    }
-    return 'Nenhum interessado cadastrado ainda.';
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -435,7 +343,7 @@ export default function ListaInteressados() {
           <div className="p-6">
             {filteredInteressados.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">{getEmptyMessage()}</p>
+                <p className="text-gray-500 text-lg">Nenhum interessado encontrado com os critérios de busca.</p>
               </div>
             ) : (
               <InteressadosTable
@@ -501,14 +409,12 @@ export default function ListaInteressados() {
         onInstrutorCadastrado={handleInstrutorCadastrado}
       />
 
-      {/* WhatsApp Mass Message Dialog - Só para administradores */}
-      {isAdmin && (
-        <WhatsAppMassMessage
-          isOpen={isWhatsAppMassOpen}
-          onClose={() => setIsWhatsAppMassOpen(false)}
-          interessados={filteredInteressados}
-        />
-      )}
+      {/* WhatsApp Mass Message Dialog */}
+      <WhatsAppMassMessage
+        isOpen={isWhatsAppMassOpen}
+        onClose={() => setIsWhatsAppMassOpen(false)}
+        interessados={filteredInteressados}
+      />
     </div>
   );
 }
