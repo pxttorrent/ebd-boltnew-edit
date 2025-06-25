@@ -262,7 +262,7 @@ export default function Login() {
     if (!apelidoRegex.test(signupData.apelido)) {
       toast({
         title: "Erro",
-        description: "O apelido deve conter apenas letras minúsculas, números e pontos.",
+        description: "O login deve conter apenas letras minúsculas, números e pontos.",
         variant: "destructive"
       });
       return;
@@ -351,13 +351,13 @@ export default function Login() {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <Label htmlFor="login-apelido">Apelido</Label>
+                    <Label htmlFor="login-apelido">Login</Label>
                     <Input
                       id="login-apelido"
                       type="text"
                       value={loginData.apelido}
                       onChange={(e) => setLoginData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
-                      placeholder="seu.apelido"
+                      placeholder="seu.login"
                       required
                       disabled={isLoggingIn}
                     />
@@ -415,19 +415,16 @@ export default function Login() {
                   </div>
 
                   <div>
-                    <Label htmlFor="signup-apelido">Apelido *</Label>
+                    <Label htmlFor="signup-apelido">Login *</Label>
                     <Input
                       id="signup-apelido"
                       type="text"
                       value={signupData.apelido}
                       onChange={(e) => setSignupData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
-                      placeholder="seu.apelido"
+                      placeholder="seu.login"
                       required
                       disabled={isSigningUp}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Seu login será: {signupData.apelido}@escola-biblica.app
-                    </p>
                   </div>
 
                   <div>
