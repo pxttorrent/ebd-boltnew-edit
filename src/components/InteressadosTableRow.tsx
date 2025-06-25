@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { StatusLabels, StatusColors, Interessado, Usuario } from '../types';
 import { Edit, Trash } from 'lucide-react';
+import WhatsAppButton from './WhatsAppButton';
 
 interface InteressadosTableRowProps {
   interessado: Interessado;
@@ -14,6 +14,7 @@ interface InteressadosTableRowProps {
   onStatusClick: (interessado: Interessado, campo: 'status') => void;
   onInstrutorClick: (interessado: Interessado) => void;
   onFrequentaCultosClick: (interessado: Interessado, campo: 'frequenta_cultos') => void;
+  onWhatsAppClick: (telefone: string, nome: string) => void;
 }
 
 export default function InteressadosTableRow({
@@ -23,7 +24,8 @@ export default function InteressadosTableRow({
   onDelete,
   onStatusClick,
   onInstrutorClick,
-  onFrequentaCultosClick
+  onFrequentaCultosClick,
+  onWhatsAppClick
 }: InteressadosTableRowProps) {
   const instrutorExiste = usuarios.some(u => 
     u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()
@@ -86,6 +88,11 @@ export default function InteressadosTableRow({
       </TableCell>
       <TableCell>
         <div className="flex gap-1 justify-center">
+          <WhatsAppButton
+            telefone={interessado.telefone}
+            nome={interessado.nome_completo}
+            onWhatsAppClick={onWhatsAppClick}
+          />
           <Button 
             variant="ghost" 
             size="sm" 

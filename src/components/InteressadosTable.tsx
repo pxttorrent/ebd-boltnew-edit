@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Interessado, Usuario } from '../types';
@@ -12,6 +11,7 @@ interface InteressadosTableProps {
   onStatusClick: (interessado: Interessado, campo: 'status') => void;
   onInstrutorClick: (interessado: Interessado) => void;
   onFrequentaCultosClick: (interessado: Interessado, campo: 'frequenta_cultos') => void;
+  onWhatsAppClick: (telefone: string, nome: string) => void;
 }
 
 export default function InteressadosTable({
@@ -21,7 +21,8 @@ export default function InteressadosTable({
   onDelete,
   onStatusClick,
   onInstrutorClick,
-  onFrequentaCultosClick
+  onFrequentaCultosClick,
+  onWhatsAppClick
 }: InteressadosTableProps) {
   return (
     <div className="overflow-x-auto">
@@ -38,7 +39,7 @@ export default function InteressadosTable({
             <TableHead className="font-semibold text-gray-700 min-w-[150px]">Participação Eventos</TableHead>
             <TableHead className="font-semibold text-gray-700 min-w-[200px]">Estudo Bíblico</TableHead>
             <TableHead className="font-semibold text-gray-700 min-w-[250px]">Observações</TableHead>
-            <TableHead className="font-semibold text-gray-700 min-w-[120px] text-center">Ações</TableHead>
+            <TableHead className="font-semibold text-gray-700 min-w-[140px] text-center">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -52,6 +53,7 @@ export default function InteressadosTable({
               onStatusClick={onStatusClick}
               onInstrutorClick={onInstrutorClick}
               onFrequentaCultosClick={onFrequentaCultosClick}
+              onWhatsAppClick={onWhatsAppClick}
             />
           ))}
         </TableBody>

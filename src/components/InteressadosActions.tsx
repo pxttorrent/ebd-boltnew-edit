@@ -1,18 +1,19 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileText } from 'lucide-react';
+import { Download, Upload, FileText, MessageCircle } from 'lucide-react';
 
 interface InteressadosActionsProps {
   onImport: () => void;
   onGenerateReport: () => void;
   onExport: () => void;
+  onWhatsAppMass: () => void;
 }
 
 export default function InteressadosActions({
   onImport,
   onGenerateReport,
-  onExport
+  onExport,
+  onWhatsAppMass
 }: InteressadosActionsProps) {
   return (
     <div className="flex gap-2">
@@ -27,6 +28,14 @@ export default function InteressadosActions({
       >
         <FileText className="w-4 h-4" />
         Relatório
+      </Button>
+      <Button 
+        onClick={onWhatsAppMass}
+        variant="outline"
+        className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+      >
+        <MessageCircle className="w-4 h-4" />
+        WhatsApp
       </Button>
       <Button 
         onClick={onExport}

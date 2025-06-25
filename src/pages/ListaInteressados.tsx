@@ -12,6 +12,7 @@ import InteressadosFilters from '../components/InteressadosFilters';
 import InteressadosActions from '../components/InteressadosActions';
 import InteressadosStats from '../components/InteressadosStats';
 import InteressadosTable from '../components/InteressadosTable';
+import WhatsAppMassMessage from '../components/WhatsAppMassMessage';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -31,6 +32,7 @@ export default function ListaInteressados() {
   const [isCadastroInstrutorOpen, setIsCadastroInstrutorOpen] = useState(false);
   const [instrutorParaCadastro, setInstrutorParaCadastro] = useState('');
   const [interessadoParaAtualizarInstrutor, setInteressadoParaAtualizarInstrutor] = useState<Interessado | null>(null);
+  const [isWhatsAppMassOpen, setIsWhatsAppMassOpen] = useState(false);
 
   // Definir colunas disponíveis para o relatório
   const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
@@ -338,6 +340,45 @@ export default function ListaInteressados() {
     setIsEdicaoRapidaOpen(true);
   };
 
+  const formatarTelefone = (telefone: string) => {
+    // Remove formatação e adiciona código do país se necessário
+    const numeroLimpo = telefone.replace(/\D/g, '');
+    if (numeroLimpo.length === 11 && numeroLimpo.startsWith('5')) {
+      return `55${numeroLimpo}`;
+    } else if (numeroLimpo.length === 10) {
+      return `555${numeroLimpo}`;
+    }
+    return `55${numeroLimpo}`;
+  };
+
+  const handleWhatsAppClick = (telefone: string, nome: string) => {
+    if (!telefone || telefone.trim() === '') {
+      toast({
+        title: "Telefone não disponível",
+        description: "Este interessado não possui telefone cadastrado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const telefoneFormatado = formatarTelefone(telefone);
+    const primeiroNome = nome.split(' ')[0];
+    const mensagem = `Olá ${primeiroNome}! Como você está? Espero que esteja tudo bem com você e sua família. 🙏`;
+    const mensagemCodificada = encodeURIComponent(mensagem);
+    
+    const urlWhatsApp = `https://wa.me/${telefoneFormatado}?text=${mensagemCodificada}`;
+    window.open(urlWhatsApp, '_blank');
+
+    toast({
+      title: "WhatsApp Aberto!",
+      description: `Conversa iniciada com ${primeiroNome}.`
+    });
+  };
+
+  const handleWhatsAppMass = () => {
+    setIsWhatsAppMassOpen(true);
+  };
+
   const getEmptyMessage = () => {
     if (currentUser?.tipo === 'missionario') {
       if (searchTerm || statusFilter !== 'todos' || cidadeFilter !== 'todas') {
@@ -375,6 +416,7 @@ export default function ListaInteressados() {
                 onImport={handleImport}
                 onGenerateReport={openColumnSelector}
                 onExport={handleExport}
+                onWhatsAppMass={handleWhatsAppMass}
               />
             </div>
 
@@ -400,6 +442,7 @@ export default function ListaInteressados() {
                 onStatusClick={handleEdicaoRapida}
                 onInstrutorClick={handleInstrutorClick}
                 onFrequentaCultosClick={handleEdicaoRapida}
+                onWhatsAppClick={handleWhatsAppClick}
               />
             )}
           </div>
@@ -451,6 +494,13 @@ export default function ListaInteressados() {
         onClose={() => setIsCadastroInstrutorOpen(false)}
         nomeInstrutor={instrutorParaCadastro}
         onInstrutorCadastrado={handleInstrutorCadastrado}
+      />
+
+      {/* WhatsApp Mass Message Dialog */}
+      <WhatsAppMassMessage
+        isOpen={isWhatsAppMassOpen}
+        onClose={() => setIsWhatsAppMassOpen(false)}
+        interessados={filteredInteressados}
       />
     </div>
   );
