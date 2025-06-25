@@ -1,57 +1,44 @@
 import { Usuario, Interessado } from '../types';
 import { hashPassword } from '../utils/passwordUtils';
 import {
-  getUsuarios,
-  addUsuario as addUsuarioToStorage,
-  updateUsuario as updateUsuarioInStorage,
-  deleteUsuario as deleteUsuarioFromStorage,
-  getInteressados,
-  addInteressado as addInteressadoToStorage,
-  updateInteressado as updateInteressadoInStorage,
-  deleteInteressado as deleteInteressadoFromStorage,
-  getCurrentUser
-} from './localStorage';
+  fetchUsuarios,
+  addUsuario as addUsuarioToSupabase,
+  updateUsuario as updateUsuarioInSupabase,
+  deleteUsuario as deleteUsuarioFromSupabase,
+  fetchInteressados,
+  addInteressado as addInteressadoToSupabase,
+  updateInteressado as updateInteressadoInSupabase,
+  deleteInteressado as deleteInteressadoFromSupabase,
+  getCurrentUserFromSupabase
+} from './supabaseService';
 
 // Usuario operations
 export const fetchUsuarios = async () => {
-  return getUsuarios();
+  return await fetchUsuarios();
 };
 
 export const addUsuario = async (usuario: Omit<Usuario, 'id'>) => {
-  // Hash password before storing
-  const hashedPassword = await hashPassword(usuario.senha);
-  
-  const usuarioWithHashedPassword = {
-    ...usuario,
-    senha: hashedPassword
-  };
-
-  return addUsuarioToStorage(usuarioWithHashedPassword);
+  return await addUsuarioToSupabase(usuario);
 };
 
 export const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
-  // Hash password if it's being updated
-  if (updates.senha) {
-    updates.senha = await hashPassword(updates.senha);
-  }
-
-  updateUsuarioInStorage(id, updates);
+  await updateUsuarioInSupabase(id, updates);
 };
 
 export const deleteUsuario = async (id: string) => {
-  deleteUsuarioFromStorage(id);
+  await deleteUsuarioFromSupabase(id);
 };
 
 // Interessado operations
 export const fetchInteressados = async () => {
-  return getInteressados();
+  return await fetchInteressados();
 };
 
 export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
   console.log('Tentando adicionar interessado:', interessado);
   
   // Verificar se há usuário logado
-  const currentUser = getCurrentUser();
+  const currentUser = await getCurrentUserFromSupabase();
   if (!currentUser) {
     throw new Error('Usuário não autenticado');
   }
@@ -92,7 +79,7 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>) => {
 
   console.log('Dados completos para inserção:', interessadoCompleto);
 
-  const newInteressado = addInteressadoToStorage(interessadoCompleto);
+  const newInteressado = await addInteressadoToSupabase(interessadoCompleto);
   console.log('Interessado criado com sucesso:', newInteressado);
   return newInteressado;
 };
@@ -104,9 +91,9 @@ export const updateInteressado = async (id: string, updates: Partial<Interessado
     ...(updates.cidade && { igreja: updates.cidade })
   };
 
-  updateInteressadoInStorage(id, updateData);
+  await updateInteressadoInSupabase(id, updateData);
 };
 
 export const deleteInteressado = async (id: string) => {
-  deleteInteressadoFromStorage(id);
+  await deleteInteressadoFromSupabase(id);
 };
