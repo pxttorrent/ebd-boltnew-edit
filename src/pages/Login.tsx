@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,14 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '../context/AppContext';
-import { signInWithSupabase, signUpWithSupabase } from '../services/supabaseService';
+import { signInWithSupabase, signUpWithSupabase, fetchIgrejas } from '../services/supabaseService';
 import { BookOpen, User, Shield, Eye, EyeOff } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
+import { Igreja } from '../types';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setCurrentUser, igrejas } = useApp();
+  const { setCurrentUser } = useApp();
   const { toast } = useToast();
+
+  // Estado para igrejas
+  const [igrejas, setIgrejas] = useState<Igreja[]>([]);
+  const [loadingIgrejas, setLoadingIgrejas] = useState(true);
 
   // Login state
   const [loginData, setLoginData] = useState({
@@ -36,6 +41,29 @@ export default function Login() {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+
+  // Carregar igrejas ao montar o componente
+  useEffect(() => {
+    const loadIgrejas = async () => {
+      try {
+        console.log('🏛️ Carregando igrejas para o formulário de cadastro...');
+        const igrejasData = await fetchIgrejas();
+        console.log('✅ Igrejas carregadas:', igrejasData.length, igrejasData.map(i => i.nome));
+        setIgrejas(igrejasData);
+      } catch (error) {
+        console.error('❌ Erro ao carregar igrejas:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar lista de igrejas. Tente recarregar a página.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingIgrejas(false);
+      }
+    };
+
+    loadIgrejas();
+  }, [toast]);
 
   // Obter igrejas ativas para o select
   const igrejasAtivas = igrejas.filter(igreja => igreja.ativa);
@@ -292,21 +320,37 @@ export default function Login() {
 
                   <div>
                     <Label htmlFor="signup-igreja">Igreja *</Label>
-                    <select
-                      id="signup-igreja"
-                      value={signupData.igreja}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, igreja: e.target.value }))}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      required
-                      disabled={isSigningUp}
-                    >
-                      <option value="">Selecione sua igreja</option>
-                      {igrejasAtivas.map((igreja) => (
-                        <option key={igreja.id} value={igreja.nome}>
-                          {igreja.nome}
-                        </option>
-                      ))}
-                    </select>
+                    {loadingIgrejas ? (
+                      <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Carregando igrejas...
+                      </div>
+                    ) : (
+                      <select
+                        id="signup-igreja"
+                        value={signupData.igreja}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, igreja: e.target.value }))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                        disabled={isSigningUp}
+                      >
+                        <option value="">Selecione sua igreja</option>
+                        {igrejasAtivas.length === 0 ? (
+                          <option value="" disabled>Nenhuma igreja ativa encontrada</option>
+                        ) : (
+                          igrejasAtivas.map((igreja) => (
+                            <option key={igreja.id} value={igreja.nome}>
+                              {igreja.nome}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    )}
+                    {igrejasAtivas.length === 0 && !loadingIgrejas && (
+                      <p className="text-xs text-red-500 mt-1">
+                        Nenhuma igreja ativa encontrada. Entre em contato com o administrador.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -381,7 +425,7 @@ export default function Login() {
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                    disabled={isSigningUp}
+                    disabled={isSigningUp || loadingIgrejas || igrejasAtivas.length === 0}
                   >
                     {isSigningUp ? 'Cadastrando...' : 'Criar Conta'}
                   </Button>
