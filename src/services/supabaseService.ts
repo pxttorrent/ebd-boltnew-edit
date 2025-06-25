@@ -407,6 +407,7 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
     
     // Obter usuário atual
     const currentUser = getCurrentUserFromSupabase()
+    console.log('👤 Usuário atual:', currentUser ? `${currentUser.nome_completo} (${currentUser.tipo})` : 'Nenhum')
     
     let query = supabase
       .from('interessados')
@@ -420,8 +421,12 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
 
     // Se for missionário, filtrar apenas os interessados que ele cadastrou
     if (currentUser && currentUser.tipo === 'missionario') {
-      console.log('🔒 Usuário missionário - filtrando apenas interessados cadastrados por ele')
+      console.log('🔒 Usuário missionário - filtrando apenas interessados cadastrados por ele (ID:', currentUser.id, ')')
       query = query.eq('cadastrado_por_id', currentUser.id)
+    } else if (currentUser && currentUser.tipo === 'administrador') {
+      console.log('🔓 Usuário administrador - acesso total aos interessados')
+    } else {
+      console.log('⚠️ Usuário não identificado ou sem tipo definido')
     }
 
     const { data: interessados, error } = await query
@@ -432,6 +437,14 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
     }
 
     console.log(`✅ ${interessados.length} interessados encontrados`)
+    
+    // Log detalhado para debug
+    if (currentUser && currentUser.tipo === 'missionario') {
+      console.log('🔍 Interessados retornados para missionário:')
+      interessados.forEach(i => {
+        console.log(`  - ${i.nome_completo} (cadastrado por: ${i.cadastrado_por?.nome_completo || 'N/A'})`)
+      })
+    }
 
     return interessados.map(interessado => ({
       id: interessado.id,
@@ -462,6 +475,8 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Prom
     if (!currentUser) {
       throw new Error('Usuário não autenticado')
     }
+
+    console.log('➕ Adicionando interessado:', interessado.nome_completo, 'pelo usuário:', currentUser.nome_completo)
 
     // Get igreja_id
     const { data: igreja, error: igrejaError } = await supabase
@@ -514,6 +529,8 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Prom
     if (error) {
       throw new Error(error.message)
     }
+
+    console.log('✅ Interessado adicionado com sucesso:', newInteressado.nome_completo)
 
     return {
       id: newInteressado.id,

@@ -67,20 +67,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
+  // Reload interessados when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      console.log('🔄 Usuário mudou, recarregando interessados para:', currentUser.nome_completo, '(', currentUser.tipo, ')');
+      loadInteressados();
+    }
+  }, [currentUser]);
+
   const loadData = async () => {
     try {
       setLoading(true);
       
-      // Load all data from Supabase
-      const [usuariosData, interessadosData, igrejasData] = await Promise.all([
+      // Load usuarios and igrejas first
+      const [usuariosData, igrejasData] = await Promise.all([
         fetchUsuarios(),
-        fetchInteressados(),
         fetchIgrejas()
       ]);
 
       setUsuarios(usuariosData);
-      setInteressados(interessadosData);
       setIgrejas(igrejasData);
+
+      // Load interessados will be called when currentUser is set
+      console.log('✅ Dados básicos carregados (usuários e igrejas)');
 
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -94,8 +103,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const loadInteressados = async () => {
+    try {
+      console.log('📥 Carregando interessados...');
+      const interessadosData = await fetchInteressados();
+      console.log('📊 Interessados carregados:', interessadosData.length);
+      setInteressados(interessadosData);
+    } catch (error: any) {
+      console.error('Error loading interessados:', error);
+      toast({
+        title: "Erro ao carregar interessados",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
+
   const refreshData = async () => {
     await loadData();
+    if (currentUser) {
+      await loadInteressados();
+    }
   };
 
   // Usuario operations
