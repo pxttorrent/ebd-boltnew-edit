@@ -16,6 +16,7 @@ import { Home, UserPlus, Users, BookOpen, Settings, LogOut, UserCog } from 'luci
 import { useApp } from '../context/AppContext';
 import { signOutFromSupabase } from '../services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
+import { getTipoUsuarioComGenero } from '../utils/textUtils';
 
 const allMenuItems = [
   {
@@ -87,6 +88,9 @@ export function AppSidebar() {
     }
   };
 
+  // Obter o tipo de usuário com gênero correto
+  const tipoUsuarioComGenero = currentUser ? getTipoUsuarioComGenero(currentUser.tipo, currentUser.nome_completo) : '';
+
   return (
     <Sidebar className="border-r border-gray-200" collapsible="icon">
       <SidebarHeader className="border-b border-gray-200 p-4">
@@ -142,7 +146,7 @@ export function AppSidebar() {
                 <div className="text-sm min-w-0 flex-1">
                   <p className="font-medium text-gray-900 truncate">{currentUser.nome_completo}</p>
                   <p className="text-gray-500 truncate">{currentUser.igreja}</p>
-                  <p className="text-xs text-blue-600 capitalize">{currentUser.tipo}</p>
+                  <p className="text-xs text-blue-600">{tipoUsuarioComGenero}</p>
                 </div>
               )}
             </div>
