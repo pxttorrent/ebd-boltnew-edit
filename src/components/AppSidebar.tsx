@@ -95,12 +95,12 @@ export function AppSidebar() {
     <>
       <Sidebar className="border-r border-gray-200" collapsible="icon">
         <SidebarHeader className="border-b border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className={`flex items-center gap-3 ${state === 'collapsed' ? 'justify-center' : ''}`}>
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <BookOpen className="w-4 h-4 text-white" />
             </div>
             {state === 'expanded' && (
-              <div>
+              <div className="min-w-0">
                 <h1 className="font-bold text-lg text-gray-900">Escola Bíblica</h1>
                 <p className="text-sm text-gray-500">Distrital</p>
               </div>
@@ -136,8 +136,8 @@ export function AppSidebar() {
         <SidebarFooter className="border-t border-gray-200 p-4 space-y-4">
           {currentUser && (
             <>
-              <div className="flex items-center gap-3">
-                <Avatar className="w-8 h-8">
+              <div className={`flex items-center gap-3 ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                <Avatar className="w-8 h-8 flex-shrink-0">
                   <AvatarImage src={currentUser.foto_perfil} />
                   <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
                     {currentUser.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
@@ -165,15 +165,17 @@ export function AppSidebar() {
               )}
               
               {state === 'collapsed' && (
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className="w-full p-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                  title="Sair"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className="w-8 h-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    title="Sair"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </div>
               )}
             </>
           )}
