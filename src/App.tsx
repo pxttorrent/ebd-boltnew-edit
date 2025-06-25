@@ -25,17 +25,9 @@ const AppContent = () => {
   useEffect(() => {
     if (!user && !loading) {
       console.log('🔄 Auto-login: Tentando fazer login automático...');
-      signIn('filipevpeixoto', 'filipevpeixoto').then(({ error }) => {
+      signIn('admin', 'password').then(({ error }) => {
         if (error) {
           console.error('❌ Auto-login falhou:', error);
-          // Try with admin user as fallback
-          signIn('admin', 'password').then(({ error: adminError }) => {
-            if (adminError) {
-              console.error('❌ Fallback admin login falhou:', adminError);
-            } else {
-              console.log('✅ Auto-login com admin realizado com sucesso');
-            }
-          });
         } else {
           console.log('✅ Auto-login realizado com sucesso');
         }
