@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Usuario, TipoUsuarioLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User, Users, Building } from 'lucide-react';
+import { Save, CheckCircle, XCircle, Edit, Trash, Shield, User, Users, Building, MessageCircle } from 'lucide-react';
 import EditarMissionario from '../components/EditarMissionario';
 import GerenciarIgrejas from '../components/GerenciarIgrejas';
+import WhatsAppConfig from '../components/WhatsAppConfig';
 
 export default function Configuracoes() {
   const { usuarios, updateUsuario, deleteUsuario, currentUser, igrejas } = useApp();
@@ -242,7 +243,7 @@ export default function Configuracoes() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
-                <p className="text-gray-600">Gerencie usuários, permissões e igrejas do sistema</p>
+                <p className="text-gray-600">Gerencie usuários, permissões, igrejas e integrações do sistema</p>
                 <div className="flex gap-4 text-sm mt-2">
                   <p className="text-blue-600">Total de usuários: {localUsuarios.length}</p>
                   <p className="text-yellow-600">Pendentes: {usuariosPendentes.length}</p>
@@ -273,7 +274,7 @@ export default function Configuracoes() {
 
           {/* Tabs */}
           <Tabs defaultValue="usuarios" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mx-6 mt-6">
+            <TabsList className="grid w-full grid-cols-4 mx-6 mt-6">
               <TabsTrigger value="usuarios" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Usuários
@@ -281,6 +282,14 @@ export default function Configuracoes() {
               <TabsTrigger value="igrejas" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Igrejas
+              </TabsTrigger>
+              <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </TabsTrigger>
+              <TabsTrigger value="sistema" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Sistema
               </TabsTrigger>
             </TabsList>
 
@@ -586,6 +595,18 @@ export default function Configuracoes() {
 
             <TabsContent value="igrejas" className="p-6">
               <GerenciarIgrejas currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="whatsapp" className="p-6">
+              <WhatsAppConfig currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="sistema" className="p-6">
+              <div className="text-center py-12">
+                <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Configurações do Sistema</h3>
+                <p className="text-gray-600">Esta seção estará disponível em breve.</p>
+              </div>
             </TabsContent>
           </Tabs>
         </div>

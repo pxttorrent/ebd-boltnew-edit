@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Send, Users, Filter, X } from 'lucide-react';
+import { MessageCircle, Send, Users, Filter, X, Settings } from 'lucide-react';
 import { Interessado } from '../types';
 import { useToast } from '@/hooks/use-toast';
+import { getWhatsAppSettings, isWhatsAppEnabled } from '../services/whatsappService';
 
 interface WhatsAppMassMessageProps {
   isOpen: boolean;
@@ -52,6 +53,10 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
   const [interessadosSelecionados, setInteressadosSelecionados] = useState<string[]>([]);
   const [selecionarTodos, setSelecionarTodos] = useState(false);
   const { toast } = useToast();
+
+  // Verificar se WhatsApp está habilitado
+  const whatsappEnabled = isWhatsAppEnabled();
+  const whatsappSettings = getWhatsAppSettings();
 
   // Filtrar interessados com telefone
   const interessadosComTelefone = interessados.filter(i => i.telefone && i.telefone.trim() !== '');
@@ -110,6 +115,15 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
   };
 
   const enviarMensagens = () => {
+    if (!whatsappEnabled) {
+      toast({
+        title: "WhatsApp Desabilitado",
+        description: "Configure o WhatsApp nas configurações do sistema antes de enviar mensagens.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!mensagem.trim()) {
       toast({
         title: "Erro",
@@ -133,6 +147,7 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
     );
 
     let mensagensEnviadas = 0;
+    const delay = whatsappSettings?.defaultDelay || 1000;
 
     interessadosParaEnvio.forEach((interessado, index) => {
       setTimeout(() => {
@@ -151,7 +166,7 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
             description: `${mensagensEnviadas} conversas do WhatsApp foram abertas com sucesso.`
           });
         }
-      }, index * 1000); // Delay de 1 segundo entre cada mensagem
+      }, index * delay);
     });
 
     onClose();
@@ -167,6 +182,51 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
     setSelecionarTodos(false);
   };
 
+  // Se WhatsApp não estiver configurado, mostrar aviso
+  if (!whatsappEnabled) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-red-600" />
+              WhatsApp Não Configurado
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+              <Settings className="w-8 h-8 text-red-600" />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Configure o WhatsApp
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Para usar o envio de mensagens em massa, você precisa configurar a API do WhatsApp nas configurações do sistema.
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Como configurar:</strong><br />
+                1. Vá em Configurações → WhatsApp<br />
+                2. Configure sua API Key e credenciais<br />
+                3. Ative o WhatsApp<br />
+                4. Teste a conexão
+              </p>
+            </div>
+
+            <Button onClick={onClose} className="w-full">
+              Entendi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -174,6 +234,11 @@ export default function WhatsAppMassMessage({ isOpen, onClose, interessados }: W
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-green-600" />
             Envio em Massa - WhatsApp
+            {whatsappEnabled && (
+              <Badge className="bg-green-100 text-green-800 ml-2">
+                Configurado
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
