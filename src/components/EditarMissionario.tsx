@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -175,162 +174,166 @@ const EditarMissionario = ({ usuario, isOpen, onClose, onSave }: EditarMissionar
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Editar Missionário</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Foto de Perfil */}
-          <div className="space-y-2">
-            <Label>Foto de Perfil</Label>
-            <div className="flex flex-col items-center gap-3">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src={formData.foto_perfil} />
-                <AvatarFallback className="text-lg">
-                  {formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+        {/* Container com scroll para o conteúdo do formulário */}
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Foto de Perfil */}
+            <div className="space-y-2">
+              <Label>Foto de Perfil</Label>
+              <div className="flex flex-col items-center gap-3">
+                <Avatar className="w-20 h-20">
+                  <AvatarImage src={formData.foto_perfil} />
+                  <AvatarFallback className="text-lg">
+                    {formData.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-              {isCapturing ? (
-                <div className="space-y-2">
-                  <video ref={videoRef} autoPlay className="w-48 h-36 border rounded" />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="flex gap-2">
-                    <Button type="button" onClick={capturePhoto} size="sm">
-                      Capturar
-                    </Button>
-                    <Button type="button" onClick={stopCamera} variant="outline" size="sm">
-                      Cancelar
-                    </Button>
+                {isCapturing ? (
+                  <div className="space-y-2">
+                    <video ref={videoRef} autoPlay className="w-48 h-36 border rounded" />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <div className="flex gap-2">
+                      <Button type="button" onClick={capturePhoto} size="sm">
+                        Capturar
+                      </Button>
+                      <Button type="button" onClick={stopCamera} variant="outline" size="sm">
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button 
-                    type="button" 
-                    onClick={() => fileInputRef.current?.click()} 
-                    variant="outline" 
-                    size="sm"
-                  >
-                    <Upload className="w-4 h-4 mr-1" />
-                    Upload
-                  </Button>
-                  <Button type="button" onClick={startCamera} variant="outline" size="sm">
-                    <Camera className="w-4 h-4 mr-1" />
-                    Câmera
-                  </Button>
-                  {formData.foto_perfil && (
-                    <Button type="button" onClick={removeFoto} variant="outline" size="sm">
-                      <X className="w-4 h-4" />
+                ) : (
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()} 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      Upload
                     </Button>
-                  )}
-                </div>
-              )}
+                    <Button type="button" onClick={startCamera} variant="outline" size="sm">
+                      <Camera className="w-4 h-4 mr-1" />
+                      Câmera
+                    </Button>
+                    {formData.foto_perfil && (
+                      <Button type="button" onClick={removeFoto} variant="outline" size="sm">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nome_completo">Nome Completo *</Label>
+              <Input
+                id="nome_completo"
+                value={formData.nome_completo}
+                onChange={handleNomeChange}
+                required
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nome_completo">Nome Completo *</Label>
-            <Input
-              id="nome_completo"
-              value={formData.nome_completo}
-              onChange={handleNomeChange}
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="apelido">Apelido *</Label>
+              <Input
+                id="apelido"
+                value={formData.apelido}
+                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="apelido">Apelido *</Label>
-            <Input
-              id="apelido"
-              value={formData.apelido}
-              onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value.toLowerCase() }))}
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="email_pessoal">E-mail Pessoal</Label>
+              <Input
+                id="email_pessoal"
+                type="email"
+                value={formData.email_pessoal}
+                onChange={(e) => setFormData(prev => ({ ...prev, email_pessoal: e.target.value }))}
+                placeholder="seu.email@exemplo.com"
+              />
+              <p className="text-xs text-gray-500">
+                Este e-mail será usado para recuperação de senha
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email_pessoal">E-mail Pessoal</Label>
-            <Input
-              id="email_pessoal"
-              type="email"
-              value={formData.email_pessoal}
-              onChange={(e) => setFormData(prev => ({ ...prev, email_pessoal: e.target.value }))}
-              placeholder="seu.email@exemplo.com"
-            />
-            <p className="text-xs text-gray-500">
-              Este e-mail será usado para recuperação de senha
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="senha">Nova Senha (deixe em branco para manter atual)</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="Digite nova senha ou deixe em branco"
+                value={formData.senha}
+                onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="senha">Nova Senha (deixe em branco para manter atual)</Label>
-            <Input
-              id="senha"
-              type="password"
-              placeholder="Digite nova senha ou deixe em branco"
-              value={formData.senha}
-              onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tipo">Tipo de Usuário *</Label>
-            <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value as Usuario['tipo'] }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="missionario">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Missionário
-                  </div>
-                </SelectItem>
-                <SelectItem value="administrador">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    Administrador
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="igreja">Igreja *</Label>
-            <Select value={formData.igreja} onValueChange={(value) => setFormData(prev => ({ ...prev, igreja: value as Usuario['igreja'] }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {IgrejaOptions.map((igreja) => (
-                  <SelectItem key={igreja} value={igreja}>
-                    {igreja}
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo de Usuário *</Label>
+              <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value as Usuario['tipo'] }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="missionario">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Missionário
+                    </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  <SelectItem value="administrador">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Administrador
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1">
-              Salvar Alterações
-            </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="igreja">Igreja *</Label>
+              <Select value={formData.igreja} onValueChange={(value) => setFormData(prev => ({ ...prev, igreja: value as Usuario['igreja'] }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {IgrejaOptions.map((igreja) => (
+                    <SelectItem key={igreja} value={igreja}>
+                      {igreja}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </form>
+        </div>
+
+        {/* Botões fixos na parte inferior */}
+        <div className="flex gap-2 pt-4 border-t flex-shrink-0">
+          <Button type="submit" className="flex-1" onClick={handleSubmit}>
+            Salvar Alterações
+          </Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
