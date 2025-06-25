@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '../context/AppContext';
 import { signInWithSupabase, signUpWithSupabase, ensureInitialChurches } from '../services/supabaseService';
@@ -12,6 +13,8 @@ import { supabase } from '@/lib/supabase';
 import { BookOpen, Eye, EyeOff, AlertCircle, RefreshCw } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
 import { Igreja } from '../types';
+
+const REMEMBER_CREDENTIALS_KEY = 'escola_biblica_remember_credentials';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,6 +33,7 @@ export default function Login() {
   });
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [rememberCredentials, setRememberCredentials] = useState(false);
 
   // Signup state
   const [signupData, setSignupData] = useState({
@@ -42,6 +46,23 @@ export default function Login() {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+
+  // Carregar credenciais salvas ao montar o componente
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem(REMEMBER_CREDENTIALS_KEY);
+    if (savedCredentials) {
+      try {
+        const { apelido, remember } = JSON.parse(savedCredentials);
+        if (remember && apelido) {
+          setLoginData(prev => ({ ...prev, apelido }));
+          setRememberCredentials(true);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar credenciais salvas:', error);
+        localStorage.removeItem(REMEMBER_CREDENTIALS_KEY);
+      }
+    }
+  }, []);
 
   // Carregar igrejas ao montar o componente
   useEffect(() => {
@@ -205,6 +226,16 @@ export default function Login() {
       }
 
       if (result.user) {
+        // Salvar ou remover credenciais baseado na escolha do usuário
+        if (rememberCredentials) {
+          localStorage.setItem(REMEMBER_CREDENTIALS_KEY, JSON.stringify({
+            apelido: loginData.apelido,
+            remember: true
+          }));
+        } else {
+          localStorage.removeItem(REMEMBER_CREDENTIALS_KEY);
+        }
+
         setCurrentUser(result.user);
         toast({
           title: "Login realizado com sucesso!",
@@ -385,6 +416,22 @@ export default function Login() {
                         {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Checkbox para lembrar credenciais */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="remember-credentials"
+                      checked={rememberCredentials}
+                      onCheckedChange={setRememberCredentials}
+                      disabled={isLoggingIn}
+                    />
+                    <Label 
+                      htmlFor="remember-credentials" 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Lembrar credenciais
+                    </Label>
                   </div>
 
                   <Button
