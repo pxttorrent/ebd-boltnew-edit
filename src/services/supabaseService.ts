@@ -12,10 +12,15 @@ export const signInWithSupabase = async (apelido: string, senha: string) => {
       .from('usuarios')
       .select('*')
       .eq('apelido', apelido)
-      .single()
+      .maybeSingle() // Use maybeSingle() instead of single() to handle no results gracefully
 
-    if (userError || !usuario) {
-      console.error('User not found:', userError)
+    if (userError) {
+      console.error('Database error:', userError)
+      return { error: 'Erro ao consultar o banco de dados' }
+    }
+
+    if (!usuario) {
+      console.log('User not found for apelido:', apelido)
       return { error: 'Usuário não encontrado' }
     }
 
@@ -36,7 +41,7 @@ export const signInWithSupabase = async (apelido: string, senha: string) => {
         .from('igrejas')
         .select('nome')
         .eq('id', usuario.igreja_id)
-        .single()
+        .maybeSingle()
       
       if (igreja) {
         igrejaNome = igreja.nome
@@ -97,7 +102,7 @@ export const signUpWithSupabase = async (userData: any) => {
       .from('usuarios')
       .select('id')
       .eq('apelido', userData.apelido)
-      .single()
+      .maybeSingle()
 
     if (existingUser) {
       return { error: 'Este apelido já está em uso. Escolha outro.' }
@@ -108,7 +113,7 @@ export const signUpWithSupabase = async (userData: any) => {
       .from('igrejas')
       .select('id')
       .eq('nome', userData.igreja)
-      .single()
+      .maybeSingle()
 
     if (igrejaError || !igreja) {
       return { error: 'Igreja não encontrada' }
@@ -203,7 +208,7 @@ export const addUsuario = async (usuario: Omit<Usuario, 'id'>): Promise<Usuario>
       .from('igrejas')
       .select('id')
       .eq('nome', usuario.igreja)
-      .single()
+      .maybeSingle()
 
     if (igrejaError || !igreja) {
       throw new Error('Igreja não encontrada')
@@ -264,7 +269,7 @@ export const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
         .from('igrejas')
         .select('id')
         .eq('nome', updates.igreja)
-        .single()
+        .maybeSingle()
 
       if (igrejaError || !igreja) {
         throw new Error('Igreja não encontrada')
@@ -350,7 +355,7 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Prom
       .from('igrejas')
       .select('id')
       .eq('nome', interessado.igreja || interessado.cidade)
-      .single()
+      .maybeSingle()
 
     if (igrejaError || !igreja) {
       throw new Error('Igreja não encontrada')
@@ -363,7 +368,7 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Prom
         .from('usuarios')
         .select('id')
         .eq('nome_completo', interessado.instrutor_biblico)
-        .single()
+        .maybeSingle()
       
       if (instrutor) {
         instrutorId = instrutor.id
@@ -428,7 +433,7 @@ export const updateInteressado = async (id: string, updates: Partial<Interessado
         .from('igrejas')
         .select('id')
         .eq('nome', igrejaNome)
-        .single()
+        .maybeSingle()
 
       if (igrejaError || !igreja) {
         throw new Error('Igreja não encontrada')
@@ -448,7 +453,7 @@ export const updateInteressado = async (id: string, updates: Partial<Interessado
           .from('usuarios')
           .select('id')
           .eq('nome_completo', updates.instrutor_biblico)
-          .single()
+          .maybeSingle()
         
         if (instrutor) {
           updateData.instrutor_biblico_id = instrutor.id
