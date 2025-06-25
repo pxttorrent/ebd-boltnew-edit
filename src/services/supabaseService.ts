@@ -15,7 +15,7 @@ export const signInWithSupabase = async (apelido: string, senha: string) => {
         igreja:igrejas(*)
       `)
       .eq('apelido', apelido)
-      .single();
+      .maybeSingle();
 
     if (userError || !userData) {
       console.error('User not found:', userError);
