@@ -18,7 +18,7 @@ import { useApp } from "./context/AppContext";
 const queryClient = new QueryClient();
 
 // Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode, requiredRole?: 'administrador' | 'missionario' }) => {
   const { currentUser, loading } = useApp();
 
   if (loading) {
@@ -36,7 +36,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Verificar se o usuário tem o papel necessário
+  if (requiredRole && currentUser.tipo !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
+};
+
+// Admin Only Route Component
+const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ProtectedRoute requiredRole="administrador">
+      {children}
+    </ProtectedRoute>
+  );
 };
 
 // Main App Layout
@@ -72,7 +86,7 @@ const App = () => (
             {/* Public route - Login */}
             <Route path="/login" element={<Login />} />
             
-            {/* Protected routes */}
+            {/* Protected routes - Available for all authenticated users */}
             <Route path="/" element={
               <ProtectedRoute>
                 <AppLayout>
@@ -97,20 +111,21 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* Admin-only routes */}
             <Route path="/missionarios" element={
-              <ProtectedRoute>
+              <AdminOnlyRoute>
                 <AppLayout>
                   <CadastroMissionarios />
                 </AppLayout>
-              </ProtectedRoute>
+              </AdminOnlyRoute>
             } />
             
             <Route path="/configuracoes" element={
-              <ProtectedRoute>
+              <AdminOnlyRoute>
                 <AppLayout>
                   <Configuracoes />
                 </AppLayout>
-              </ProtectedRoute>
+              </AdminOnlyRoute>
             } />
             
             {/* 404 route */}

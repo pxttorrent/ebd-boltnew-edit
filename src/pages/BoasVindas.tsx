@@ -1,38 +1,41 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, Users, BookOpen, Settings, Quote } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const features = [
+const allFeatures = [
   {
     title: 'Cadastrar Interessados',
     description: 'Registre novos contatos interessados nos estudos bíblicos',
     icon: UserPlus,
     link: '/cadastrar-interessado',
-    color: 'from-green-500 to-green-600'
+    color: 'from-green-500 to-green-600',
+    allowedFor: ['administrador', 'missionario']
   },
   {
     title: 'Gerenciar Interessados',
     description: 'Acompanhe o progresso e status de cada interessado',
     icon: Users,
     link: '/interessados',
-    color: 'from-blue-500 to-blue-600'
+    color: 'from-blue-500 to-blue-600',
+    allowedFor: ['administrador', 'missionario']
   },
   {
     title: 'Cadastrar Missionários',
     description: 'Gerencie a equipe de instrutores bíblicos',
     icon: BookOpen,
     link: '/missionarios',
-    color: 'from-purple-500 to-purple-600'
+    color: 'from-purple-500 to-purple-600',
+    allowedFor: ['administrador'] // Apenas administradores
   },
   {
     title: 'Configurações',
     description: 'Configure permissões e ajustes do sistema',
     icon: Settings,
     link: '/configuracoes',
-    color: 'from-gray-500 to-gray-600'
+    color: 'from-gray-500 to-gray-600',
+    allowedFor: ['administrador'] // Apenas administradores
   }
 ];
 
@@ -73,12 +76,17 @@ const versosBiblicos = [
 
 export default function BoasVindas() {
   const [versoAtual, setVersoAtual] = useState(versosBiblicos[0]);
-  const { usuarios, interessados } = useApp();
+  const { usuarios, interessados, currentUser } = useApp();
 
   useEffect(() => {
     const indiceAleatorio = Math.floor(Math.random() * versosBiblicos.length);
     setVersoAtual(versosBiblicos[indiceAleatorio]);
   }, []);
+
+  // Filtrar features baseado no tipo de usuário
+  const features = allFeatures.filter(feature => 
+    currentUser && feature.allowedFor.includes(currentUser.tipo)
+  );
 
   // Calcular estatísticas
   const numeroMissionarios = usuarios.filter(u => u.aprovado).length;
@@ -112,14 +120,16 @@ export default function BoasVindas() {
 
         {/* Cards de Estatísticas */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Missionários Ativos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{numeroMissionarios}</div>
-            </CardContent>
-          </Card>
+          {currentUser?.tipo === 'administrador' && (
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Missionários Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{numeroMissionarios}</div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-2">
@@ -130,14 +140,16 @@ export default function BoasVindas() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Aguardando Aprovação</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{missionariosAguardandoAprovacao}</div>
-            </CardContent>
-          </Card>
+          {currentUser?.tipo === 'administrador' && (
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Aguardando Aprovação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">{missionariosAguardandoAprovacao}</div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-2">
@@ -150,7 +162,7 @@ export default function BoasVindas() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className={`grid gap-6 mb-12 ${features.length === 2 ? 'md:grid-cols-2' : features.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
           {features.map((feature, index) => (
             <Link
               key={index}
@@ -187,7 +199,10 @@ export default function BoasVindas() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Equipe Organizada</h3>
               <p className="text-gray-600">
-                Gerencie missionários e instrutores com permissões personalizadas para cada função.
+                {currentUser?.tipo === 'administrador' 
+                  ? 'Gerencie missionários e instrutores com permissões personalizadas para cada função.'
+                  : 'Trabalhe em equipe com outros missionários para alcançar mais pessoas.'
+                }
               </p>
             </div>
             <div>
@@ -196,7 +211,10 @@ export default function BoasVindas() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Controle Total</h3>
               <p className="text-gray-600">
-                Configure permissões, exporte dados e mantenha total controle sobre as informações.
+                {currentUser?.tipo === 'administrador'
+                  ? 'Configure permissões, exporte dados e mantenha total controle sobre as informações.'
+                  : 'Acesse todas as funcionalidades necessárias para seu trabalho missionário.'
+                }
               </p>
             </div>
           </div>

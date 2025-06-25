@@ -17,31 +17,36 @@ import { useApp } from '../context/AppContext';
 import { signOutFromSupabase } from '../services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
 
-const menuItems = [
+const allMenuItems = [
   {
     title: 'Boas-vindas',
     url: '/',
     icon: Home,
+    allowedFor: ['administrador', 'missionario']
   },
   {
     title: 'Cadastrar Interessados',
     url: '/cadastrar-interessado',
     icon: UserPlus,
+    allowedFor: ['administrador', 'missionario']
   },
   {
     title: 'Lista de Interessados',
     url: '/interessados',
     icon: Users,
+    allowedFor: ['administrador', 'missionario']
   },
   {
     title: 'Cadastro de Missionários',
     url: '/missionarios',
     icon: BookOpen,
+    allowedFor: ['administrador'] // Apenas administradores
   },
   {
     title: 'Configurações',
     url: '/configuracoes',
     icon: Settings,
+    allowedFor: ['administrador'] // Apenas administradores
   },
 ];
 
@@ -51,6 +56,11 @@ export function AppSidebar() {
   const { currentUser, setCurrentUser } = useApp();
   const { state } = useSidebar();
   const { toast } = useToast();
+
+  // Filtrar itens do menu baseado no tipo de usuário
+  const menuItems = allMenuItems.filter(item => 
+    currentUser && item.allowedFor.includes(currentUser.tipo)
+  );
 
   const handleLogout = async () => {
     try {
@@ -126,6 +136,7 @@ export function AppSidebar() {
                 <div className="text-sm min-w-0 flex-1">
                   <p className="font-medium text-gray-900 truncate">{currentUser.nome_completo}</p>
                   <p className="text-gray-500 truncate">{currentUser.igreja}</p>
+                  <p className="text-xs text-blue-600 capitalize">{currentUser.tipo}</p>
                 </div>
               )}
             </div>
