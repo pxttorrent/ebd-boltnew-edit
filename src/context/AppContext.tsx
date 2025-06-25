@@ -13,7 +13,8 @@ import {
   fetchIgrejas,
   addIgreja as addIgrejaToSupabase,
   updateIgreja as updateIgrejaInSupabase,
-  deleteIgreja as deleteIgrejaFromSupabase
+  deleteIgreja as deleteIgrejaFromSupabase,
+  getCurrentUserFromSupabase
 } from '../services/supabaseService';
 
 interface AppContextType {
@@ -57,6 +58,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadData();
   }, []);
 
+  // Check for existing user session on mount
+  useEffect(() => {
+    const existingUser = getCurrentUserFromSupabase();
+    if (existingUser) {
+      setCurrentUser(existingUser);
+      console.log('Usuário encontrado no localStorage:', existingUser.nome_completo);
+    }
+  }, []);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -71,15 +81,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setUsuarios(usuariosData);
       setInteressados(interessadosData);
       setIgrejas(igrejasData);
-
-      // Set first admin user as current user for system access
-      const adminUser = usuariosData.find(u => u.tipo === 'administrador' && u.aprovado);
-      if (adminUser) {
-        setCurrentUser(adminUser);
-        console.log('Sistema iniciado com usuário administrador:', adminUser.nome_completo);
-      } else {
-        console.warn('Nenhum usuário administrador encontrado');
-      }
 
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -132,6 +133,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (currentUser?.id === id) {
         const updatedUser = { ...currentUser, ...updates };
         setCurrentUser(updatedUser);
+        // Update localStorage
+        localStorage.setItem('escola_biblica_current_user', JSON.stringify(updatedUser));
       }
 
       toast({

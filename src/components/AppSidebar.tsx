@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -11,8 +11,11 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, UserPlus, Users, BookOpen, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Home, UserPlus, Users, BookOpen, Settings, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { signOutFromSupabase } from '../services/supabaseService';
+import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
   {
@@ -44,8 +47,29 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { currentUser } = useApp();
+  const navigate = useNavigate();
+  const { currentUser, setCurrentUser } = useApp();
   const { state } = useSidebar();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOutFromSupabase();
+      setCurrentUser(null);
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <Sidebar className="border-r border-gray-200" collapsible="icon">
@@ -90,20 +114,46 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-gray-200 p-4 space-y-4">
         {currentUser && (
-          <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={currentUser.foto_perfil} />
-              <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                {currentUser.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+          <>
+            <div className="flex items-center gap-3">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={currentUser.foto_perfil} />
+                <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                  {currentUser.nome_completo.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {state === 'expanded' && (
+                <div className="text-sm min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 truncate">{currentUser.nome_completo}</p>
+                  <p className="text-gray-500 truncate">{currentUser.igreja}</p>
+                </div>
+              )}
+            </div>
+            
             {state === 'expanded' && (
-              <div className="text-sm min-w-0 flex-1">
-                <p className="font-medium text-gray-900 truncate">{currentUser.nome_completo}</p>
-                <p className="text-gray-500 truncate">{currentUser.igreja}</p>
-              </div>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="w-full flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                <LogOut className="w-4 h-4" />
+                Sair
+              </Button>
             )}
-          </div>
+            
+            {state === 'collapsed' && (
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="w-full p-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
+          </>
         )}
       </SidebarFooter>
     </Sidebar>
