@@ -11,7 +11,8 @@ import { Usuario } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash, AlertCircle, Upload, X, Shield, User, Lock } from 'lucide-react';
 import { capitalizeWords } from '../utils/textUtils';
-import { addUsuario } from '../services/supabaseService';
+import { hashPassword } from '../utils/passwordUtils';
+import { addUsuario } from '../services/localStorage';
 import EditarMissionario from '../components/EditarMissionario';
 import FotoCropper from '../components/FotoCropper';
 
@@ -152,12 +153,16 @@ export default function CadastroMissionarios() {
     try {
       console.log('Iniciando cadastro de missionário...', { apelido: formData.apelido, igreja: formData.igreja, tipo: formData.tipo });
       
+      // Hash password before storing
+      const hashedPassword = await hashPassword(formData.senha);
+      console.log('Senha hasheada com sucesso');
+      
       // Create new user
-      const usuario = await addUsuario({
+      const usuario = addUsuario({
         nome_completo: formData.nome_completo,
         apelido: formData.apelido,
         login_acesso,
-        senha: formData.senha,
+        senha: hashedPassword,
         email_pessoal: formData.email_pessoal,
         igreja: formData.igreja,
         tipo: formData.tipo,

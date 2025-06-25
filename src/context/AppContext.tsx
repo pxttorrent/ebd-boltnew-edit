@@ -3,20 +3,20 @@ import { Usuario, Interessado, Igreja } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  fetchUsuarios,
-  addUsuario as addUsuarioToSupabase,
-  updateUsuario as updateUsuarioInSupabase,
-  deleteUsuario as deleteUsuarioFromSupabase,
-  fetchInteressados,
-  addInteressado as addInteressadoToSupabase,
-  updateInteressado as updateInteressadoInSupabase,
-  deleteInteressado as deleteInteressadoFromSupabase,
-  fetchIgrejas,
-  addIgreja as addIgrejaToSupabase,
-  updateIgreja as updateIgrejaInSupabase,
-  deleteIgreja as deleteIgrejaFromSupabase,
-  getCurrentUserFromSupabase
-} from '../services/supabaseService';
+  getUsuarios,
+  addUsuario as addUsuarioToStorage,
+  updateUsuario as updateUsuarioInStorage,
+  deleteUsuario as deleteUsuarioFromStorage,
+  getInteressados,
+  addInteressado as addInteressadoToStorage,
+  updateInteressado as updateInteressadoInStorage,
+  deleteInteressado as deleteInteressadoFromStorage,
+  getIgrejas,
+  addIgreja as addIgrejaToStorage,
+  updateIgreja as updateIgrejaInStorage,
+  deleteIgreja as deleteIgrejaFromStorage,
+  getCurrentUser
+} from '../services/localStorage';
 
 interface AppContextType {
   // Usuario management
@@ -72,26 +72,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       setLoading(true);
       
-      // Load current user from Supabase
-      const currentUserData = await getCurrentUserFromSupabase();
-      setCurrentUser(currentUserData);
+      // Load usuarios and find current user
+      const usuariosData = getUsuarios();
+      setUsuarios(usuariosData);
+      
+      // Find current user by matching auth user ID
+      const currentUserData = usuariosData.find(u => u.id === user?.id);
+      setCurrentUser(currentUserData || null);
 
       if (currentUserData) {
         console.log('Usuário atual encontrado:', currentUserData);
-        
-        // Load all data
-        const [usuariosData, interessadosData, igrejasData] = await Promise.all([
-          fetchUsuarios(),
-          fetchInteressados(),
-          fetchIgrejas()
-        ]);
-
-        setUsuarios(usuariosData);
-        setInteressados(interessadosData);
-        setIgrejas(igrejasData);
       } else {
-        console.warn('Usuário atual não encontrado');
+        console.warn('Usuário atual não encontrado nos dados do localStorage');
       }
+
+      // Load interessados
+      const interessadosData = getInteressados();
+      setInteressados(interessadosData);
+
+      // Load igrejas
+      const igrejasData = getIgrejas();
+      setIgrejas(igrejasData);
 
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -112,7 +113,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Usuario operations
   const addUsuario = async (usuario: Usuario) => {
     try {
-      const newUsuario = await addUsuarioToSupabase(usuario);
+      const newUsuario = addUsuarioToStorage(usuario);
       setUsuarios(prev => [...prev, newUsuario]);
       
       toast({
@@ -132,7 +133,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateUsuario = async (id: string, updates: Partial<Usuario>) => {
     try {
-      await updateUsuarioInSupabase(id, updates);
+      updateUsuarioInStorage(id, updates);
       
       setUsuarios(prev => 
         prev.map(usuario => 
@@ -162,7 +163,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteUsuario = async (id: string) => {
     try {
-      await deleteUsuarioFromSupabase(id);
+      deleteUsuarioFromStorage(id);
       setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
       
       toast({
@@ -186,6 +187,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.log('Context: Adicionando interessado:', interessado);
       
       // Verificar se há usuário logado
+      const currentUser = getCurrentUser();
       if (!currentUser) {
         throw new Error('Usuário não autenticado');
       }
@@ -203,7 +205,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         throw new Error('Você só pode cadastrar interessados da sua igreja');
       }
 
-      const newInteressado = await addInteressadoToSupabase(interessado);
+      const newInteressado = addInteressadoToStorage(interessado);
       console.log('Context: Interessado adicionado:', newInteressado);
       
       setInteressados(prev => [...prev, newInteressado]);
@@ -221,7 +223,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateInteressado = async (id: string, updates: Partial<Interessado>) => {
     try {
-      await updateInteressadoInSupabase(id, updates);
+      updateInteressadoInStorage(id, updates);
       
       setInteressados(prev => 
         prev.map(interessado => 
@@ -246,7 +248,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteInteressado = async (id: string) => {
     try {
-      await deleteInteressadoFromSupabase(id);
+      deleteInteressadoFromStorage(id);
       setInteressados(prev => prev.filter(interessado => interessado.id !== id));
       
       toast({
@@ -267,7 +269,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Igreja operations
   const addIgreja = async (igreja: Omit<Igreja, 'id'>) => {
     try {
-      const newIgreja = await addIgrejaToSupabase(igreja);
+      const newIgreja = addIgrejaToStorage(igreja);
       setIgrejas(prev => [...prev, newIgreja]);
       
       toast({
@@ -287,7 +289,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateIgreja = async (id: string, updates: Partial<Igreja>) => {
     try {
-      await updateIgrejaInSupabase(id, updates);
+      updateIgrejaInStorage(id, updates);
       
       setIgrejas(prev => 
         prev.map(igreja => 
@@ -321,7 +323,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         throw new Error(`Não é possível excluir a igreja "${igrejaNome}" pois há ${usuariosVinculados.length} usuário(s) e ${interessadosVinculados.length} interessado(s) vinculados a ela. Desative a igreja ao invés de excluí-la.`);
       }
 
-      await deleteIgrejaFromSupabase(id);
+      deleteIgrejaFromStorage(id);
       setIgrejas(prev => prev.filter(igreja => igreja.id !== id));
       
       toast({
