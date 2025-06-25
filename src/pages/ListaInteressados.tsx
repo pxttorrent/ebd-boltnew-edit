@@ -34,6 +34,9 @@ export default function ListaInteressados() {
   const [interessadoParaAtualizarInstrutor, setInteressadoParaAtualizarInstrutor] = useState<Interessado | null>(null);
   const [isWhatsAppMassOpen, setIsWhatsAppMassOpen] = useState(false);
 
+  // Verificar se o usuário é administrador
+  const isAdmin = currentUser?.tipo === 'administrador';
+
   // Definir colunas disponíveis para o relatório
   const [reportColumns, setReportColumns] = useState<ColumnOption[]>([
     { key: 'nome_completo', label: 'Nome Completo', selected: true },
@@ -417,6 +420,7 @@ export default function ListaInteressados() {
                 onGenerateReport={openColumnSelector}
                 onExport={handleExport}
                 onWhatsAppMass={handleWhatsAppMass}
+                currentUser={currentUser}
               />
             </div>
 
@@ -443,6 +447,7 @@ export default function ListaInteressados() {
                 onInstrutorClick={handleInstrutorClick}
                 onFrequentaCultosClick={handleEdicaoRapida}
                 onWhatsAppClick={handleWhatsAppClick}
+                currentUser={currentUser}
               />
             )}
           </div>
@@ -496,12 +501,14 @@ export default function ListaInteressados() {
         onInstrutorCadastrado={handleInstrutorCadastrado}
       />
 
-      {/* WhatsApp Mass Message Dialog */}
-      <WhatsAppMassMessage
-        isOpen={isWhatsAppMassOpen}
-        onClose={() => setIsWhatsAppMassOpen(false)}
-        interessados={filteredInteressados}
-      />
+      {/* WhatsApp Mass Message Dialog - Só para administradores */}
+      {isAdmin && (
+        <WhatsAppMassMessage
+          isOpen={isWhatsAppMassOpen}
+          onClose={() => setIsWhatsAppMassOpen(false)}
+          interessados={filteredInteressados}
+        />
+      )}
     </div>
   );
 }

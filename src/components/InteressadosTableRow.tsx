@@ -15,6 +15,7 @@ interface InteressadosTableRowProps {
   onInstrutorClick: (interessado: Interessado) => void;
   onFrequentaCultosClick: (interessado: Interessado, campo: 'frequenta_cultos') => void;
   onWhatsAppClick: (telefone: string, nome: string) => void;
+  currentUser: any;
 }
 
 export default function InteressadosTableRow({
@@ -25,11 +26,14 @@ export default function InteressadosTableRow({
   onStatusClick,
   onInstrutorClick,
   onFrequentaCultosClick,
-  onWhatsAppClick
+  onWhatsAppClick,
+  currentUser
 }: InteressadosTableRowProps) {
   const instrutorExiste = usuarios.some(u => 
     u.nome_completo.toLowerCase() === interessado.instrutor_biblico.toLowerCase()
   );
+
+  const isAdmin = currentUser?.tipo === 'administrador';
 
   return (
     <TableRow className="hover:bg-gray-50">
@@ -88,11 +92,14 @@ export default function InteressadosTableRow({
       </TableCell>
       <TableCell>
         <div className="flex gap-1 justify-center">
-          <WhatsAppButton
-            telefone={interessado.telefone}
-            nome={interessado.nome_completo}
-            onWhatsAppClick={onWhatsAppClick}
-          />
+          {isAdmin && (
+            <WhatsAppButton
+              telefone={interessado.telefone}
+              nome={interessado.nome_completo}
+              onWhatsAppClick={onWhatsAppClick}
+              currentUser={currentUser}
+            />
+          )}
           <Button 
             variant="ghost" 
             size="sm" 

@@ -8,6 +8,7 @@ interface WhatsAppButtonProps {
   onWhatsAppClick: (telefone: string, nome: string) => void;
   size?: 'sm' | 'default';
   variant?: 'ghost' | 'outline' | 'default';
+  currentUser: any;
 }
 
 export default function WhatsAppButton({ 
@@ -15,8 +16,14 @@ export default function WhatsAppButton({
   nome, 
   onWhatsAppClick, 
   size = 'sm',
-  variant = 'ghost' 
+  variant = 'ghost',
+  currentUser
 }: WhatsAppButtonProps) {
+  // Só mostrar para administradores
+  if (currentUser?.tipo !== 'administrador') {
+    return null;
+  }
+
   const handleClick = () => {
     if (!telefone || telefone.trim() === '') {
       return;

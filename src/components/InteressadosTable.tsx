@@ -12,6 +12,7 @@ interface InteressadosTableProps {
   onInstrutorClick: (interessado: Interessado) => void;
   onFrequentaCultosClick: (interessado: Interessado, campo: 'frequenta_cultos') => void;
   onWhatsAppClick: (telefone: string, nome: string) => void;
+  currentUser: any;
 }
 
 export default function InteressadosTable({
@@ -22,7 +23,8 @@ export default function InteressadosTable({
   onStatusClick,
   onInstrutorClick,
   onFrequentaCultosClick,
-  onWhatsAppClick
+  onWhatsAppClick,
+  currentUser
 }: InteressadosTableProps) {
   return (
     <div className="overflow-x-auto">
@@ -54,6 +56,7 @@ export default function InteressadosTable({
               onInstrutorClick={onInstrutorClick}
               onFrequentaCultosClick={onFrequentaCultosClick}
               onWhatsAppClick={onWhatsAppClick}
+              currentUser={currentUser}
             />
           ))}
         </TableBody>
