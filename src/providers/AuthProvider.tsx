@@ -2,7 +2,7 @@ import { useState, useEffect, ReactNode } from 'react';
 import { Usuario } from '../types';
 import { AuthContext } from '@/contexts/AuthContext';
 import { loginUser, registerUser, logoutUser } from '@/services/authService';
-import { getCurrentUser, setCurrentUser } from '@/services/localStorage';
+import { getCurrentUserFromSupabase } from '@/services/supabaseService';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<Usuario | null>(null);
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for existing user in localStorage
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUserFromSupabase();
     setUser(currentUser);
     setLoading(false);
   }, []);

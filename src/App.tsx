@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,33 +13,56 @@ import CadastrarInteressado from "./pages/CadastrarInteressado";
 import ListaInteressados from "./pages/ListaInteressados";
 import CadastroMissionarios from "./pages/CadastroMissionarios";
 import Configuracoes from "./pages/Configuracoes";
-import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signIn } = useAuth();
 
+  // Auto-login with administrator user
   useEffect(() => {
-    // Force re-render when user changes
-    console.log('User state changed:', user?.id);
-  }, [user]);
+    if (!user && !loading) {
+      console.log('🔄 Auto-login: Tentando fazer login automático...');
+      signIn('filipevpeixoto', 'filipevpeixoto').then(({ error }) => {
+        if (error) {
+          console.error('❌ Auto-login falhou:', error);
+          // Try with admin user as fallback
+          signIn('admin', 'password').then(({ error: adminError }) => {
+            if (adminError) {
+              console.error('❌ Fallback admin login falhou:', adminError);
+            } else {
+              console.log('✅ Auto-login com admin realizado com sucesso');
+            }
+          });
+        } else {
+          console.log('✅ Auto-login realizado com sucesso');
+        }
+      });
+    }
+  }, [user, loading, signIn]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <p className="mt-4 text-gray-600">Carregando sistema...</p>
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return <Login />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Conectando ao sistema...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
