@@ -405,14 +405,26 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
   try {
     console.log('📥 Buscando interessados do Supabase...')
     
-    const { data: interessados, error } = await supabase
+    // Obter usuário atual
+    const currentUser = getCurrentUserFromSupabase()
+    
+    let query = supabase
       .from('interessados')
       .select(`
         *,
         igrejas (nome),
-        instrutor:usuarios!interessados_instrutor_biblico_id_fkey (nome_completo)
+        instrutor:usuarios!interessados_instrutor_biblico_id_fkey (nome_completo),
+        cadastrado_por:usuarios!interessados_cadastrado_por_id_fkey (nome_completo)
       `)
       .order('nome_completo')
+
+    // Se for missionário, filtrar apenas os interessados que ele cadastrou
+    if (currentUser && currentUser.tipo === 'missionario') {
+      console.log('🔒 Usuário missionário - filtrando apenas interessados cadastrados por ele')
+      query = query.eq('cadastrado_por_id', currentUser.id)
+    }
+
+    const { data: interessados, error } = await query
 
     if (error) {
       console.error('❌ Erro ao buscar interessados:', error)
@@ -445,6 +457,12 @@ export const fetchInteressados = async (): Promise<Interessado[]> => {
 
 export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Promise<Interessado> => {
   try {
+    // Obter usuário atual
+    const currentUser = getCurrentUserFromSupabase()
+    if (!currentUser) {
+      throw new Error('Usuário não autenticado')
+    }
+
     // Get igreja_id
     const { data: igreja, error: igrejaError } = await supabase
       .from('igrejas')
@@ -482,12 +500,14 @@ export const addInteressado = async (interessado: Omit<Interessado, 'id'>): Prom
         data_contato: interessado.data_contato,
         observacoes: interessado.observacoes || '',
         frequenta_cultos: interessado.frequenta_cultos,
-        estudo_biblico: interessado.estudo_biblico || ''
+        estudo_biblico: interessado.estudo_biblico || '',
+        cadastrado_por_id: currentUser.id // Registrar quem cadastrou
       })
       .select(`
         *,
         igrejas (nome),
-        instrutor:usuarios!interessados_instrutor_biblico_id_fkey (nome_completo)
+        instrutor:usuarios!interessados_instrutor_biblico_id_fkey (nome_completo),
+        cadastrado_por:usuarios!interessados_cadastrado_por_id_fkey (nome_completo)
       `)
       .single()
 

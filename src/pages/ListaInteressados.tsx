@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Interessado, StatusLabels } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import EditarInteressado from '../components/EditarInteressado';
@@ -13,6 +14,7 @@ import InteressadosActions from '../components/InteressadosActions';
 import InteressadosStats from '../components/InteressadosStats';
 import InteressadosTable from '../components/InteressadosTable';
 import WhatsAppMassMessage from '../components/WhatsAppMassMessage';
+import { Info, Shield, User } from 'lucide-react';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -48,7 +50,7 @@ export default function ListaInteressados() {
     { key: 'observacoes', label: 'Observações', selected: false }
   ]);
 
-  // Filtrar interessados - sem restrições de acesso
+  // Filtrar interessados baseado no tipo de usuário
   const filteredInteressados = useMemo(() => {
     // Aplicar filtros de busca
     return interessados.filter(interessado => {
@@ -312,6 +314,41 @@ export default function ListaInteressados() {
           <div className="p-6 border-b border-gray-200">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Lista de Interessados</h1>
             
+            {/* Aviso para missionários sobre a restrição de acesso */}
+            {currentUser?.tipo === 'missionario' && (
+              <Alert className="mb-6 bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span>
+                      <strong>Acesso Restrito:</strong> Como missionário, você visualiza apenas os interessados que você mesmo cadastrou.
+                      {filteredInteressados.length === 0 && (
+                        <span className="block mt-1 text-sm">
+                          Você ainda não cadastrou nenhum interessado. Use a opção "Cadastrar Interessados" no menu para começar.
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Informação para administradores */}
+            {currentUser?.tipo === 'administrador' && (
+              <Alert className="mb-6 bg-purple-50 border-purple-200">
+                <Shield className="h-4 w-4 text-purple-600" />
+                <AlertDescription className="text-purple-800">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span>
+                      <strong>Acesso Total:</strong> Como administrador, você pode visualizar e gerenciar todos os interessados do sistema.
+                    </span>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               <InteressadosFilters
                 searchTerm={searchTerm}
@@ -343,7 +380,31 @@ export default function ListaInteressados() {
           <div className="p-6">
             {filteredInteressados.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Nenhum interessado encontrado com os critérios de busca.</p>
+                {currentUser?.tipo === 'missionario' ? (
+                  <div className="space-y-4">
+                    <User className="w-16 h-16 text-gray-400 mx-auto" />
+                    <div>
+                      <p className="text-gray-500 text-lg font-medium">Nenhum interessado encontrado</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Como missionário, você só pode ver os interessados que cadastrou.
+                        {interessados.length === 0 
+                          ? " Comece cadastrando seu primeiro interessado!"
+                          : " Use os filtros acima para refinar sua busca."
+                        }
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Shield className="w-16 h-16 text-gray-400 mx-auto" />
+                    <div>
+                      <p className="text-gray-500 text-lg font-medium">Nenhum interessado encontrado</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Nenhum interessado corresponde aos critérios de busca aplicados.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <InteressadosTable
