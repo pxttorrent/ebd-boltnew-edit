@@ -190,7 +190,7 @@ export function AppSidebar() {
       >
         <button
           onClick={toggleSidebar}
-          className="group relative w-6 h-12 bg-white border border-gray-200 rounded-r-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="group relative w-6 h-12 bg-white border border-gray-200 rounded-r-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center hover:bg-gray-50 outline-none focus:outline-none focus:ring-0"
           title={state === 'expanded' ? 'Recolher sidebar' : 'Expandir sidebar'}
         >
           {/* Background gradient on hover */}
